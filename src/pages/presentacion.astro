@@ -29,6 +29,21 @@ const nombre = "Maria Valentina Osorio Romero";
         text-align: center;
       }
 
+      nav {
+        margin-bottom: 25px;
+      }
+
+      nav a {
+        margin: 0 12px;
+        text-decoration: none;
+        font-weight: 600;
+        color: #667eea;
+      }
+
+      nav a:hover {
+        text-decoration: underline;
+      }
+
       h1 {
         margin-bottom: 8px;
         color: #2d2d2d;
@@ -69,20 +84,26 @@ const nombre = "Maria Valentina Osorio Romero";
 
   <body>
     <div class="card">
+
+      <!-- MENÚ DE NAVEGACIÓN -->
+      <nav>
+        <a href="/">Inicio</a>
+        <a href="/presentacion">Presentación</a>
+        <a href="/evidencias">Evidencias</a>
+      </nav>
+
       <h1>Presentación</h1>
 
       <p>Hola, soy <strong>{nombre}</strong>.</p>
 
-<h2>🎥 Video de presentación</h2>
-<iframe
-  width="640"
-  height="360"
-  src="https://www.youtube.com/embed/gChxQrsO_fA"
-  title="Video de presentación"
-  frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen
-></iframe>
+      <h2>🎥 Video de presentación</h2>
+      <iframe
+        width="640"
+        height="360"
+        src="https://www.youtube.com/embed/gChxQrsO_fA"
+        title="Video de presentación"
+        allowfullscreen
+      ></iframe>
 
       <h2>📸 Foto o avatar</h2>
       <img src="/e-portafolio/vl.webp" alt="Foto de presentación" />
