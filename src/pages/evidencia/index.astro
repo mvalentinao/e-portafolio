@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Evidencias</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 18px;
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+
+    .buttons {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 20px;
+    }
+
+    .btn {
+      padding: 16px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+      transition: .2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-4px);
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 30px;
+      color: #667eea;
+      font-weight: 600;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Evidencias</h1>
+    <p>Seleccione el tipo de evidencia a consultar</p>
+
+    <div class="buttons">
+      <a class="btn" href="/evidencias/sql">SQL</a>
+      <a class="btn" href="/evidencias/plsql">PL / SQL</a>
+      <a class="btn" href="/evidencias/nosql">NoSQL</a>
+      <a class="btn" href="/evidencias/proyecto">Proyecto</a>
+    </div>
+
+    <a class="back" href="/">⬅ Volver al inicio</a>
+  </div>
+</body>
+</html>
