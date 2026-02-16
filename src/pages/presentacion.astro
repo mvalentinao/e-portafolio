@@ -4,113 +4,117 @@ const nombre = "Maria Valentina Osorio Romero";
 
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Presentación</title>
+<head>
+  <meta charset="UTF-8" />
+  <title>Presentación | E-Portafolio</title>
 
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-      }
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-      .card {
-        background: #ffffff;
-        width: 90%;
-        max-width: 800px;
-        border-radius: 18px;
-        padding: 32px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-        text-align: center;
-      }
+    .card {
+      background: #ffffff;
+      width: 90%;
+      max-width: 800px;
+      border-radius: 18px;
+      padding: 36px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
 
-      nav {
-        margin-bottom: 25px;
-      }
+    /* MENÚ */
+    nav {
+      margin-bottom: 30px;
+    }
 
-      nav a {
-        margin: 0 12px;
-        text-decoration: none;
-        font-weight: 600;
-        color: #667eea;
-      }
+    nav a {
+      margin: 0 14px;
+      text-decoration: none;
+      font-weight: 600;
+      color: #667eea;
+    }
 
-      nav a:hover {
-        text-decoration: underline;
-      }
+    nav a:hover {
+      text-decoration: underline;
+    }
 
-      h1 {
-        margin-bottom: 8px;
-        color: #2d2d2d;
-      }
+    h1 {
+      margin-bottom: 10px;
+      color: #2d2d2d;
+    }
 
-      p {
-        font-size: 1.1rem;
-        color: #555;
-        margin-bottom: 28px;
-      }
+    p {
+      font-size: 1.1rem;
+      color: #555;
+      margin-bottom: 28px;
+    }
 
-      h2 {
-        margin-top: 30px;
-        color: #444;
-      }
+    h2 {
+      margin-top: 30px;
+      color: #444;
+    }
 
-      iframe {
-        margin-top: 15px;
-        border-radius: 14px;
-        border: none;
-        max-width: 100%;
-      }
+    iframe {
+      margin-top: 15px;
+      border-radius: 14px;
+      border: none;
+      max-width: 100%;
+    }
 
-      img {
-        margin-top: 18px;
-        width: 180px;
-        border-radius: 50%;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-      }
+    img {
+      margin-top: 20px;
+      width: 180px;
+      border-radius: 50%;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
 
-      footer {
-        margin-top: 28px;
-        font-size: 0.9rem;
-        color: #777;
-      }
-    </style>
-  </head>
+    footer {
+      margin-top: 30px;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
+</head>
 
-  <body>
-    <div class="card">
+<body>
+  <div class="card">
 
-      <!-- MENÚ DE NAVEGACIÓN -->
-      <nav>
-        <a href="/">Inicio</a>
-        <a href="/presentacion">Presentación</a>
-        <a href="/evidencias">Evidencias</a>
-      </nav>
+    <!-- MENÚ NAVEGABLE (RUTAS RELATIVAS) -->
+    <nav>
+      <a href="./">Inicio</a>
+      <a href="./presentacion">Presentación</a>
+      <a href="./evidencias">Evidencias</a>
+    </nav>
 
-      <h1>Presentación</h1>
+    <h1>Presentación</h1>
 
-      <p>Hola, soy <strong>{nombre}</strong>.</p>
+    <p>
+      Hola, soy <strong>{nombre}</strong>.
+    </p>
 
-      <h2>🎥 Video de presentación</h2>
-      <iframe
-        width="640"
-        height="360"
-        src="https://www.youtube.com/embed/gChxQrsO_fA"
-        title="Video de presentación"
-        allowfullscreen
-      ></iframe>
+    <h2>🎥 Video de presentación</h2>
+    <iframe
+      width="640"
+      height="360"
+      src="https://www.youtube.com/embed/gChxQrsO_fA"
+      title="Video de presentación"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
 
-      <h2>📸 Foto o avatar</h2>
-      <img src="/e-portafolio/vl.webp" alt="Foto de presentación" />
+    <h2>📸 Foto o avatar</h2>
+    <img src="/e-portafolio/vl.webp" alt="Foto de presentación" />
 
-      <footer>
-        E-Portafolio personal
-      </footer>
-    </div>
-  </body>
+    <footer>
+      E-Portafolio · Bases de Datos II
+    </footer>
+  </div>
+</body>
 </html>
