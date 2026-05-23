@@ -1,0 +1,385 @@
+---
+import "../../styles/plsql.css";
+
+const ejercicios = [
+  {
+    num: "Punto 01 · Bloque Anónimo",
+    titulo: "Liquidación Individual — Bloque Anónimo",
+    enunciado:
+      "Calcula la liquidación quincenal de un empleado usando un <strong>bloque anónimo</strong> con cursor explícito parametrizado. Determina salario base según tipo de contrato (PLANTA / TEMPORAL / SERVICIOS), acumula recargos nocturnos y dominicales, y aplica bonificación por antigüedad si no tiene más de 2 sanciones en los últimos 6 meses.",
+    codigo: `DECLARE
+    vn_id_empleado EMPLEADOS.id_empleado%TYPE := 1001;
+    vv_quincena    VARCHAR2(20)               := '2026-Q1-ENE';
+
+    CURSOR c_horas IS
+        SELECT tipo_hora, cantidad_horas
+          FROM HORAS_TRABAJADAS
+         WHERE id_empleado = vn_id_empleado
+           AND id_quincena = vv_quincena;
+BEGIN
+    SELECT nombre, cod_sede, tipo_contrato,
+           fecha_ingreso, salario_base
+      INTO vv_nombre, vv_sede, vv_tipo, vd_fecha, vn_salario
+      FROM EMPLEADOS
+     WHERE id_empleado = vn_id_empleado;
+
+    -- Salario base quincenal según tipo de contrato
+    IF vv_tipo = 'PLANTA' THEN
+        vn_base_q     := vn_salario / 2;
+        vn_valor_hora := vn_salario / 240;
+    ELSIF vv_tipo = 'TEMPORAL' THEN
+        vn_valor_hora := vn_salario;
+        FOR r IN c_horas LOOP
+            IF r.tipo_hora = 'NORMAL' THEN
+                vn_base_q := vn_base_q + (vn_valor_hora * r.cantidad_horas);
+            END IF;
+        END LOOP;
+    ELSIF vv_tipo = 'SERVICIOS' THEN
+        vn_base_q := (vn_salario - (vn_salario * vn_ret_serv / 100)) / 2;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('=== LIQUIDACION QUINCENAL ===');
+    DBMS_OUTPUT.PUT_LINE('Empleado: ' || vv_nombre);
+    DBMS_OUTPUT.PUT_LINE('Base Q:   ' || TO_CHAR(vn_base_q, '999,999,999.00'));
+END;
+/`,
+  },
+  {
+    num: "Punto 02 · Funciones Standalone",
+    titulo: "Funciones Encadenadas — FN_SALARIO_BASE_Q, FN_RECARGOS, FN_BONIFICACION, FN_BRUTO",
+    enunciado:
+      "Crea cuatro funciones <strong>standalone</strong> que encapsulan cada regla de negocio: <code>FN_SALARIO_BASE_Q</code> (Regla 1 — salario base según contrato), <code>FN_RECARGOS</code> (Regla 2 — recargos con cursor parametrizado), <code>FN_BONIFICACION</code> (Regla 3 — bonificación por antigüedad y sanciones), y <code>FN_BRUTO</code> (Reglas 4-6 — auxilio transporte, bono sede y bruto total).",
+    codigo: `-- A. fn_salario_base_q — Regla 1
+CREATE OR REPLACE FUNCTION fn_salario_base_q (
+    p_id_empleado IN NUMBER,
+    p_id_quincena IN VARCHAR2
+) RETURN NUMBER IS
+    vv_tipo_contrato EMPLEADOS.tipo_contrato%TYPE;
+    vdo_salario_base EMPLEADOS.salario_base%TYPE;
+BEGIN
+    SELECT tipo_contrato, salario_base
+      INTO vv_tipo_contrato, vdo_salario_base
+      FROM EMPLEADOS WHERE id_empleado = p_id_empleado;
+
+    IF vv_tipo_contrato = 'PLANTA' THEN
+        RETURN ROUND(vdo_salario_base / 2, 2);
+    ELSIF vv_tipo_contrato = 'TEMPORAL' THEN
+        -- Horas normales × valor hora
+        RETURN ROUND(vdo_salario_base * vdo_horas_normales, 2);
+    ELSIF vv_tipo_contrato = 'SERVICIOS' THEN
+        RETURN ROUND((vdo_salario_base
+               - (vdo_salario_base * vdo_ret / 100)) / 2, 2);
+    END IF;
+    RETURN 0;
+END fn_salario_base_q;
+/
+
+-- D. fn_bruto — Reglas 4, 5 y 6
+CREATE OR REPLACE FUNCTION fn_bruto (
+    p_id_empleado IN NUMBER,
+    p_id_quincena IN VARCHAR2
+) RETURN NUMBER IS
+BEGIN
+    vdo_salario_q    := fn_salario_base_q(p_id_empleado, p_id_quincena);
+    vdo_recargos     := fn_recargos(p_id_empleado, p_id_quincena);
+    vdo_bonificacion := fn_bonificacion(p_id_empleado);
+
+    -- Auxilio transporte si salario <= 2 SMLMV
+    IF vdo_sal_mens_equiv <= (2 * vdo_smlmv) THEN
+        vdo_aux_transp := vdo_aux_mensual / 2;
+    END IF;
+
+    -- Bono clima Santa Marta
+    IF vv_cod_sede = 'SMA' THEN
+        vdo_bono_sede := vdo_bono_sma;
+    END IF;
+
+    RETURN ROUND(vdo_salario_q + vdo_recargos + vdo_bonificacion
+                 + vdo_aux_transp + vdo_bono_sede, 2);
+END fn_bruto;
+/`,
+  },
+  {
+    num: "Punto 03 · Stored Procedure",
+    titulo: "SP_LIQUIDAR_EMPLEADO — Procedimiento con Excepciones",
+    enunciado:
+      "Procedimiento almacenado que liquida un empleado individual. Incluye tres validaciones con <code>RAISE_APPLICATION_ERROR</code>: empleado existente (<code>-20001</code>), estado activo (<code>-20002</code>) y liquidación no duplicada (<code>-20003</code>). Calcula bruto, deducciones (salud 4%, pensión 4%, fondo solidaridad, embargos, libranzas, aporte voluntario) e inserta en <code>LIQUIDACION</code> con <code>COMMIT</code>/<code>ROLLBACK</code>.",
+    codigo: `CREATE OR REPLACE PROCEDURE sp_liquidar_empleado (
+    p_id_empleado IN NUMBER,
+    p_id_quincena IN VARCHAR2
+) IS
+BEGIN
+    -- Validacion 1: empleado existe
+    BEGIN
+        SELECT estado, tipo_contrato, cod_sede, acepta_aporte_vol
+          INTO vv_estado, vv_tipo, vv_cod_sede, vv_aporte_vol
+          FROM EMPLEADOS WHERE id_empleado = p_id_empleado;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20001,
+                'Empleado no encontrado: ' || p_id_empleado);
+    END;
+
+    -- Validacion 2: debe estar ACTIVO
+    IF vv_estado <> 'ACTIVO' THEN
+        RAISE_APPLICATION_ERROR(-20002,
+            'Empleado no activo: estado = ' || vv_estado);
+    END IF;
+
+    -- Deducciones
+    vn_salud   := ROUND(vn_bruto * vn_pct_salud   / 100, 2);
+    vn_pension := ROUND(vn_bruto * vn_pct_pension  / 100, 2);
+
+    IF (vn_bruto * 2) > (vn_umbral * vn_smlmv) THEN
+        vn_fondo := ROUND(vn_bruto * vn_pct_fondo / 100, 2);
+    END IF;
+
+    INSERT INTO LIQUIDACION (
+        ID_LIQUIDACION, ID_EMPLEADO, ID_QUINCENA, ...
+    ) VALUES (
+        SEQ_LIQUIDACION.NEXTVAL, p_id_empleado, p_id_quincena, ...
+    );
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN ROLLBACK; RAISE;
+END sp_liquidar_empleado;
+/`,
+  },
+  {
+    num: "Punto 04 · Package",
+    titulo: "PKG_NOMINA — Package Spec + Body",
+    enunciado:
+      "Package completo con <strong>spec</strong> y <strong>body</strong>. Spec expone: variable pública <code>gc_smlmv</code> (inicializada en el init block), tipo <code>t_concepto_liq</code> (RECORD), tipo <code>t_lista_liq</code> (INDEX BY PLS_INTEGER), dos sobrecargas de <code>SP_LIQUIDAR_QUINCENA</code> (individual y masiva), <code>FN_TOTAL_NOMINA_SEDE</code> y <code>FN_REPORTE_NOMINA</code> (PIPELINED). Body incluye funciones privadas, cache de parámetros y procedimiento autónomo <code>SP_LOG_NOMINA</code>.",
+    codigo: `CREATE OR REPLACE PACKAGE PKG_NOMINA AS
+
+    gc_smlmv NUMBER;  -- asignada en init block del body
+
+    TYPE t_concepto_liq IS RECORD (
+        id_empleado       LIQUIDACION.id_empleado%TYPE,
+        salario_base_q    LIQUIDACION.salario_base_q%TYPE,
+        recargos          LIQUIDACION.recargos%TYPE,
+        bonificacion      LIQUIDACION.bonificacion%TYPE,
+        bruto             LIQUIDACION.bruto%TYPE,
+        neto              LIQUIDACION.neto%TYPE
+        -- ... demas campos
+    );
+
+    TYPE t_lista_liq IS TABLE OF t_concepto_liq
+        INDEX BY PLS_INTEGER;
+
+    -- Sobrecarga: un empleado
+    PROCEDURE sp_liquidar_quincena (
+        p_id_empleado IN NUMBER,
+        p_id_quincena IN VARCHAR2
+    );
+
+    -- Sobrecarga: todos los activos
+    PROCEDURE sp_liquidar_quincena (
+        p_id_quincena IN VARCHAR2
+    );
+
+    FUNCTION fn_total_nomina_sede (
+        p_cod_sede    IN VARCHAR2,
+        p_id_quincena IN VARCHAR2
+    ) RETURN NUMBER;
+
+    FUNCTION fn_reporte_nomina (
+        p_cod_sede      IN VARCHAR2 DEFAULT NULL,
+        p_tipo_contrato IN VARCHAR2 DEFAULT NULL
+    ) RETURN t_lista_liq_pipe PIPELINED;
+
+END PKG_NOMINA;
+/`,
+  },
+  {
+    num: "Punto 05 · Compound Trigger",
+    titulo: "TRG_LIQUIDACION_COMPOUND — Trigger Compuesto",
+    enunciado:
+      "Compound trigger sobre <code>LIQUIDACION</code> con tres fases: <strong>BEFORE EACH ROW</strong> valida que el salario base no sea negativo y ajusta embargo/libranzas si el neto resulta negativo (Regla 8); <strong>AFTER EACH ROW</strong> registra alertas en <code>LOG_NOMINA</code> y descuenta saldos de libranzas activas; <strong>AFTER STATEMENT</strong> registra el lote procesado.",
+    codigo: `CREATE OR REPLACE TRIGGER TRG_LIQUIDACION_COMPOUND
+FOR INSERT ON LIQUIDACION
+COMPOUND TRIGGER
+
+    TYPE t_ajuste IS RECORD (
+        id_empleado NUMBER,
+        libranzas   NUMBER,
+        embargo     NUMBER,
+        neto_orig   NUMBER
+    );
+    TYPE t_lista_ajuste IS TABLE OF t_ajuste
+        INDEX BY PLS_INTEGER;
+    vt_ajustes  t_lista_ajuste;
+
+    -- BEFORE EACH ROW: validacion y ajuste neto negativo
+    BEFORE EACH ROW IS
+    BEGIN
+        IF :NEW.salario_base_q < 0 THEN
+            RAISE_APPLICATION_ERROR(-20010,
+                'Salario base no puede ser negativo');
+        END IF;
+
+        IF :NEW.neto < 0 THEN
+            :NEW.total_deducciones := :NEW.total_deducciones - :NEW.embargo;
+            :NEW.embargo           := 0;
+            :NEW.neto              := :NEW.bruto - :NEW.total_deducciones;
+
+            IF :NEW.neto < 0 THEN
+                :NEW.total_deducciones := :NEW.total_deducciones - :NEW.libranzas;
+                :NEW.libranzas         := 0;
+                :NEW.neto              := :NEW.bruto - :NEW.total_deducciones;
+            END IF;
+        END IF;
+    END BEFORE EACH ROW;
+
+    -- AFTER EACH ROW: log alertas + actualiza libranzas
+    AFTER EACH ROW IS
+    BEGIN
+        IF :NEW.libranzas > 0 THEN
+            UPDATE LIBRANZAS
+               SET saldo_pendiente = saldo_pendiente - (cuota_mensual / 2)
+             WHERE id_empleado = :NEW.id_empleado
+               AND estado = 'ACTIVA';
+        END IF;
+    END AFTER EACH ROW;
+
+    -- AFTER STATEMENT: log del lote
+    AFTER STATEMENT IS
+    BEGIN
+        INSERT INTO LOG_NOMINA (ID_LOG, OPERACION, DETALLE)
+        VALUES (SEQ_LOG.NEXTVAL, 'INSERT_LIQUIDACION',
+                'Lote procesado a las '
+                || TO_CHAR(SYSTIMESTAMP, 'HH24:MI:SS.FF3'));
+    END AFTER STATEMENT;
+
+END TRG_LIQUIDACION_COMPOUND;
+/`,
+  },
+  {
+    num: "Puntos 06-08 · Masivo + Pipelined + Auditoría",
+    titulo: "BULK COLLECT + FORALL, Pipelined Function y AUTONOMOUS_TRANSACTION",
+    enunciado:
+      "Liquidación masiva con <code>BULK COLLECT</code> de empleados activos + <code>FORALL … SAVE EXCEPTIONS</code> para INSERT tolerante a fallos. Función <code>FN_REPORTE_NOMINA</code> con <strong>PIPELINED</strong> y SQL dinámico usando <code>REF CURSOR</code>. Procedimiento privado <code>SP_LOG_NOMINA</code> con <code>PRAGMA AUTONOMOUS_TRANSACTION</code> para auditoría persistente incluso si la transacción principal falla.",
+    codigo: `-- PUNTO 6 — Liquidacion masiva: BULK COLLECT + FORALL
+PROCEDURE sp_liquidar_quincena (
+    p_id_quincena IN VARCHAR2
+) IS
+    TYPE t_ids IS TABLE OF EMPLEADOS.id_empleado%TYPE;
+    vt_ids t_ids;
+BEGIN
+    SELECT id_empleado BULK COLLECT INTO vt_ids
+      FROM EMPLEADOS
+     WHERE estado = 'ACTIVO'
+       AND id_empleado NOT IN (
+           SELECT id_empleado FROM LIQUIDACION
+            WHERE id_quincena = p_id_quincena);
+
+    FORALL i IN 1 .. vn_idx SAVE EXCEPTIONS
+        INSERT INTO LIQUIDACION ( ... )
+        VALUES (SEQ_LIQUIDACION.NEXTVAL,
+                vt_lista(i).id_empleado, ...);
+    COMMIT;
+END;
+
+-- PUNTO 7 — Pipelined Function + SQL Dinamico
+FUNCTION fn_reporte_nomina (
+    p_cod_sede      IN VARCHAR2 DEFAULT NULL,
+    p_tipo_contrato IN VARCHAR2 DEFAULT NULL
+) RETURN t_lista_liq_pipe PIPELINED IS
+    TYPE t_ref IS REF CURSOR;
+    cur_dyn t_ref;
+BEGIN
+    vv_sql := 'SELECT ... FROM LIQUIDACION l
+               JOIN EMPLEADOS e ON ... WHERE 1=1';
+    IF p_cod_sede IS NOT NULL THEN
+        vv_sql := vv_sql || ' AND e.cod_sede = :sede';
+    END IF;
+    OPEN cur_dyn FOR vv_sql USING ...;
+    LOOP
+        FETCH cur_dyn INTO ...;
+        EXIT WHEN cur_dyn%NOTFOUND;
+        PIPE ROW(t_concepto_liq_obj( ... ));
+    END LOOP;
+    CLOSE cur_dyn;
+END fn_reporte_nomina;
+
+-- PUNTO 8 — Auditoria con AUTONOMOUS_TRANSACTION
+PROCEDURE sp_log_nomina ( ... ) IS
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    INSERT INTO LOG_NOMINA (ID_LOG, OPERACION, DETALLE, ...)
+    VALUES (SEQ_LOG.NEXTVAL, p_operacion, p_detalle, ...);
+    COMMIT;  -- persiste aunque la transaccion padre haga ROLLBACK
+END sp_log_nomina;`,
+  },
+];
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PL/SQL · Nómina | E-Portafolio · BD2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">E-Portafolio · BD2</span>
+    <nav class="header-nav">
+      <a href="/e-portafolio/">Inicio</a>
+      <a href="/e-portafolio/presentacion">Presentación</a>
+      <a href="/e-portafolio/evidencia">Evidencias</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <p class="hero-eyebrow">Taller Avanzado · Oracle 19c</p>
+    <h1 class="hero-title">
+      PL/<span>SQL</span>
+    </h1>
+    <p class="hero-sub">
+      Sistema de Liquidación de Nómina para HotelGroup S.A. —
+      package, funciones, procedimientos, trigger compound,
+      tipos objeto y pipelined table function.
+    </p>
+  </section>
+
+  <div class="content-area">
+    {ejercicios.map((ej) => (
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge">PL/SQL</span>
+            <div class="ex-num">{ej.num}</div>
+            <h3>{ej.titulo}</h3>
+          </div>
+        </div>
+        <p class="enunciado" set:html={ej.enunciado} />
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">PL/SQL · Oracle 19c</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre>{ej.codigo}</pre>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="footer-area">
+    <a class="back-link" href="/e-portafolio/evidencia">← Volver a Evidencias</a>
+  </div>
+
+  <script is:inline>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-wrapper').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => { btn.textContent = 'Copiar'; }, 1800);
+      });
+    }
+  </script>
+
+</body>
+</html>

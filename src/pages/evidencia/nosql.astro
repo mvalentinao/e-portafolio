@@ -1,0 +1,105 @@
+---
+import "../../styles/nosql.css";
+
+const ejercicios = [
+  {
+    num: "Ejercicio 01",
+    titulo: "Inserción de colecciones — Mundial 2026",
+    enunciado: "Crea la base de datos <strong>mundial2026</strong> e inserta datos en cuatro colecciones: selecciones, jugadores, estadios y partidos.",
+    codigo: `use("mundial2026");
+
+db.selecciones.insertMany([
+  {
+    continente: "América del Sur",
+    pais: "Colombia",
+    capital: "Bogotá"
+  }
+]);`
+  },
+  {
+    num: "Ejercicio 02",
+    titulo: "Airbnb — Listados con antigüedad ≥ 5 años",
+    enunciado: "Consulta alojamientos en Sydney cuya primera reseña sea anterior a hace 5 años.",
+    codigo: `use("sample_airbnb");
+
+db.listingsAndReviews.find({
+  "address.market": "Sydney"
+});`
+  },
+  {
+    num: "Ejercicio 03",
+    titulo: "Airbnb — Cable TV y Wifi",
+    enunciado: "Filtra apartamentos con Cable TV y Wifi usando el operador <code>$all</code>.",
+    codigo: `db.listingsAndReviews.find({
+  property_type: "Apartment",
+  amenities: {
+    $all: ["Cable TV", "Wifi"]
+  }
+});`
+  }
+];
+---
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoSQL / MongoDB | E-Portafolio · BD2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">E-Portafolio · BD2</span>
+    <nav class="header-nav">
+      <a href="/e-portafolio/">Inicio</a>
+      <a href="/e-portafolio/presentacion">Presentación</a>
+      <a href="/e-portafolio/evidencia">Evidencias</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <p class="hero-eyebrow">Base de Datos II</p>
+    <h1 class="hero-title">NoSQL<br /><span>MongoDB</span></h1>
+    <p class="hero-sub">Inserción masiva de documentos y consultas con operadores de filtro sobre colecciones reales.</p>
+  </section>
+
+  <div class="content-area">
+    {ejercicios.map((ej) => (
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge">MongoDB</span>
+            <div class="ex-num">{ej.num}</div>
+            <h3>{ej.titulo}</h3>
+          </div>
+        </div>
+        <p class="enunciado" set:html={ej.enunciado} />
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">mongodb shell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre>{ej.codigo}</pre>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="footer-area">
+    <a class="back-link" href="/e-portafolio/evidencia">← Volver a Evidencias</a>
+  </div>
+
+  <script is:inline>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-wrapper').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => { btn.textContent = 'Copiar'; }, 1800);
+      });
+    }
+  </script>
+
+</body>
+</html>

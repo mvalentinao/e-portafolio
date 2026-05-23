@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.find( 
+  { property_type: { $in: ["House", "Condominium"] } }, 
+  { _id: 0, name: 1, property_type: 1} 
+) 

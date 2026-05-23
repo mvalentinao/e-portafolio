@@ -1,0 +1,12 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.insertMany([ 
+  { 
+    name: "Casa de la Playa Caribe", 
+    property_type: "House", 
+    price: NumberDecimal("200.00"), 
+    summary: "Frente al mar con todas las comodidades.", 
+    amenities: ["Wifi", "Kitchen", "Free parking", "Pool", "Air conditioning"], 
+    address: { country: "Colombia", market: "Cartagena" } 
+  } 
+]) 

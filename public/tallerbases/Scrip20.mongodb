@@ -1,0 +1,14 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.updateOne( 
+  { name: "Mansión de Prueba" }, 
+  { 
+    $set: { 
+      name: "Mansión de Prueba", 
+      price: NumberDecimal("1500.00"), 
+      address: { country: "United States" }, 
+      property_type: "Villa" 
+    } 
+  }, 
+  { upsert: true } 
+)

@@ -1,0 +1,14 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.aggregate([ 
+  { 
+    $bucket: { 
+      groupBy: { $toDouble: "$price" }, 
+      boundaries: [0, 101, 301, 1001], 
+      default: "1000+", 
+      output: { 
+        cantidad: { $sum: 1 }, 
+      } 
+    } 
+  }, 
+])

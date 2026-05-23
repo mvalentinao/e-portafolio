@@ -1,0 +1,793 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Directorio que contiene los scripts
+const tallerBasesDir = path.resolve('public/tallerbases');
+let scripts = [];
+
+try {
+  if (fs.existsSync(tallerBasesDir)) {
+    const files = fs.readdirSync(tallerBasesDir);
+    // Filtrar archivos .mongodb y ordenar numéricamente
+    const mongodbFiles = files.filter(f => f.endsWith('.mongodb') || f.endsWith('.sql'));
+    
+    mongodbFiles.sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+      const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+      return numA - numB;
+    });
+
+    scripts = mongodbFiles.map(file => {
+      const filePath = path.join(tallerBasesDir, file);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      return {
+        name: file,
+        content: content
+      };
+    });
+  }
+} catch (e) {
+  console.error("Error leyendo la carpeta tallerbases:", e);
+}
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talleres | E-Portafolio · BD2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #141720;
+      --surface2: #1c2030;
+      --border: #252b3d;
+      --accent: #f0c96a;
+      --accent-dim: rgba(240,201,106,0.12);
+      --green: #5ec994;
+      --green-dim: rgba(94,201,148,0.12);
+      --blue: #82aaff;
+      --blue-dim: rgba(130,170,255,0.12);
+      --orange: #f08060;
+      --orange-dim: rgba(240,128,96,0.12);
+      --purple: #c792ea;
+      --purple-dim: rgba(199,146,234,0.12);
+      --text: #e2e6f0;
+      --muted: #6b7394;
+      --subtle: #3a4060;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+    /* HEADER */
+    .site-header {
+      border-bottom: 1px solid var(--border); padding: 18px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0;
+      background: rgba(13,15,20,0.92); backdrop-filter: blur(12px); z-index: 100;
+    }
+    .logo { font-size: 0.78rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+    .header-nav { display: flex; gap: 28px; }
+    .header-nav a { text-decoration: none; color: var(--muted); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; transition: color 0.2s; }
+    .header-nav a:hover, .header-nav a.active { color: var(--text); }
+
+    /* HERO */
+    .hero { padding: 72px 40px 48px; max-width: 1100px; margin: 0 auto; }
+    .hero-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: block; }
+    .hero-title { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.05; margin-bottom: 16px; letter-spacing: -1.5px; }
+    .hero-title span { color: var(--accent); }
+    .hero-sub { color: var(--muted); font-size: 0.95rem; max-width: 520px; line-height: 1.7; }
+
+    /* LAYOUT */
+    .main { max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; display: flex; flex-direction: column; gap: 32px; }
+
+    /* TALLER CARD */
+    .taller {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      overflow: hidden; animation: slideUp 0.4s ease both;
+    }
+    .taller:nth-child(1) { animation-delay: .05s; }
+    .taller:nth-child(2) { animation-delay: .10s; }
+    .taller:nth-child(3) { animation-delay: .15s; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TALLER HEADER */
+    .taller-head {
+      padding: 28px 32px 24px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: start;
+    }
+    .taller-num {
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem;
+      color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .taller-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .taller-sub { font-size: 0.88rem; color: var(--muted); line-height: 1.65; max-width: 580px; }
+    .taller-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .badge { padding: 5px 13px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.4px; white-space: nowrap; }
+    .badge-plsql  { background: var(--orange-dim); color: var(--orange); }
+    .badge-sql    { background: var(--blue-dim);   color: var(--blue); }
+    .badge-oracle { background: var(--purple-dim); color: var(--purple); }
+    .badge-acid   { background: var(--green-dim);  color: var(--green); }
+
+    /* TALLER BODY */
+    .taller-body { padding: 24px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .taller-body.triple { grid-template-columns: repeat(3, 1fr); }
+
+    /* DETAIL BLOCK */
+    .detail { display: flex; flex-direction: column; gap: 6px; }
+    .detail-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
+    .detail-val { font-size: 0.87rem; color: var(--text); line-height: 1.5; }
+    .detail-val.mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--accent); }
+
+    /* SECCIONES LIST */
+    .sections-list { display: flex; flex-direction: column; gap: 6px; }
+    .section-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--muted);
+    }
+    .section-num {
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+      color: var(--accent); min-width: 24px;
+    }
+
+    /* TEMAS LIST */
+    .temas-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tema-tag {
+      padding: 4px 10px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--muted);
+    }
+
+    /* TALLER FOOTER */
+    .taller-foot {
+      padding: 18px 32px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--surface2);
+    }
+    .foot-info { font-size: 0.8rem; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+    .download-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent-dim); border: 1px solid var(--accent);
+      color: var(--accent); border-radius: 10px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; font-weight: 600;
+      text-decoration: none; letter-spacing: 0.5px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .download-btn:hover { background: var(--accent); color: #0d0f14; }
+    .download-btn.blue { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+    .download-btn.blue:hover { background: var(--blue); color: #0d0f14; }
+    .download-btn.orange { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); }
+    .download-btn.orange:hover { background: var(--orange); color: #0d0f14; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* CODE PREVIEW */
+    .code-preview {
+      margin: 0 32px 24px;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .code-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+    .code-dots { display: flex; gap: 6px; }
+    .code-dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+    .code-lang { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .code-body {
+      background: #0a0c11; padding: 20px;
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem;
+      line-height: 1.7; color: #8fa6c8; overflow-x: auto;
+      max-height: 200px; overflow-y: auto;
+    }
+    .code-body .kw  { color: #c792ea; }
+    .code-body .fn  { color: #82aaff; }
+    .code-body .str { color: #c3e88d; }
+    .code-body .cm  { color: #464b5d; font-style: italic; }
+    .code-body .num { color: #f78c6c; }
+
+    /* DIVIDER */
+    .divider-label {
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 0;
+    }
+    .divider-label::before, .divider-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* FOOTER */
+    .footer-area { max-width: 1100px; margin: 0 auto; padding: 0 40px 60px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--muted); font-size: 0.82rem; font-weight: 600; transition: color 0.2s; }
+    .back-link:hover { color: var(--text); }
+
+    /* MONGO VIEWER */
+    .mongo-viewer-container {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: rgba(10, 12, 17, 0.4);
+      margin-top: 10px;
+    }
+    .script-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .script-selector-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+    .script-selector-grid::-webkit-scrollbar-track {
+      background: var(--surface);
+      border-radius: 3px;
+    }
+    .script-selector-grid::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    .script-selector-grid::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+    .script-btn {
+      display: flex;
+      align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0 16px;
+      height: 38px;
+      min-height: 38px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1;
+      text-align: left;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .script-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(240, 201, 106, 0.05);
+    }
+    .script-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .download-script-icon-btn {
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      text-decoration: none;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    .download-script-icon-btn:hover {
+      color: var(--accent);
+      background: var(--border);
+    }
+    .download-btn.green {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+    .download-btn.green:hover {
+      background: var(--green);
+      color: #0d0f14;
+    }
+
+    @media (max-width: 768px) {
+      .site-header { padding: 16px 20px; }
+      .hero { padding: 48px 20px 32px; }
+      .main { padding: 0 20px 60px; }
+      .footer-area { padding: 0 20px 40px; }
+      .taller-head { grid-template-columns: 1fr; }
+      .taller-meta { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+      .taller-body, .taller-body.triple { grid-template-columns: 1fr; }
+      .taller-foot { flex-direction: column; align-items: flex-start; }
+      .code-preview { margin: 0 20px 20px; }
+      .mongo-viewer-container {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+      .script-selector-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        max-height: 180px;
+        padding-right: 0;
+        margin-bottom: 10px;
+      }
+      .script-btn {
+        justify-content: center;
+        font-size: 0.72rem;
+        padding: 0 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">E-Portafolio · BD2</span>
+    <nav class="header-nav">
+      <a href="/e-portafolio/">Inicio</a>
+      <a href="/e-portafolio/presentacion">Presentacion</a>
+      <a href="/e-portafolio/evidencia" class="active">Evidencias</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="hero-eyebrow">Bases de Datos II · 2026</span>
+    <h1 class="hero-title">Talleres<br><span>Aplicados</span></h1>
+    <p class="hero-sub">Ejercicios avanzados de SQL y PL/SQL desarrollados sobre Oracle Database 19c, cubriendo transacciones ACID, liquidacion de nomina y ajustes salariales.</p>
+  </section>
+
+  <div class="main">
+
+    <!-- ── TALLER 1 ── -->
+    <div class="taller">
+      <div class="taller-head">
+        <div>
+          <div class="taller-num">Taller 01 · PL/SQL Avanzado</div>
+          <div class="taller-title">Sistema de Liquidacion de Nomina</div>
+          <div class="taller-sub">Desarrollo completo de un sistema de liquidacion quincenal para HotelGroup S.A. con cuatro sedes. Implementa un package PL/SQL, funciones, procedimientos almacenados, triggers compound, tipos objeto y pipelined table functions sobre Oracle Database 19c.</div>
+        </div>
+        <div class="taller-meta">
+          <span class="badge badge-plsql">PL/SQL</span>
+          <span class="badge badge-oracle">Oracle 19c</span>
+        </div>
+      </div>
+
+      <div class="taller-body triple">
+        <div class="detail">
+          <span class="detail-label">Integrantes</span>
+          <span class="detail-val">Maria Valentina Osorio Romero<br>Juan Pablo Moreno Castro</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Materia</span>
+          <span class="detail-val">Bases de Datos II</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Motor de BD</span>
+          <span class="detail-val mono">Oracle Database 19c</span>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Temas cubiertos</span>
+          <div class="temas-list">
+            <span class="tema-tag">Package PKG_NOMINA</span>
+            <span class="tema-tag">Funciones (FN_)</span>
+            <span class="tema-tag">Stored Procedures (SP_)</span>
+            <span class="tema-tag">Trigger COMPOUND</span>
+            <span class="tema-tag">Tipos Objeto (T_)</span>
+            <span class="tema-tag">Pipelined Table Function</span>
+            <span class="tema-tag">SMLMV 2026</span>
+            <span class="tema-tag">Aportes salud / pension</span>
+            <span class="tema-tag">Recargos nocturnos y dominicales</span>
+            <span class="tema-tag">Libranzas y embargos</span>
+            <span class="tema-tag">Log de nomina</span>
+          </div>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Estructura del sistema</span>
+          <div class="sections-list">
+            <div class="section-item"><span class="section-num">01</span>Setup y limpieza previa — tablas y secuencias</div>
+            <div class="section-item"><span class="section-num">02</span>Tablas: PARAMETROS, SEDES, EMPLEADOS, HORAS_TRABAJADAS, SANCIONES, LIBRANZAS, EMBARGOS, LIQUIDACION, LOG_NOMINA</div>
+            <div class="section-item"><span class="section-num">03</span>Funciones: FN_SALARIO_BASE_Q, FN_RECARGOS, FN_BONIFICACION, FN_BRUTO</div>
+            <div class="section-item"><span class="section-num">04</span>Package PKG_NOMINA (spec + body) con SP_LIQUIDAR_EMPLEADO</div>
+            <div class="section-item"><span class="section-num">05</span>Trigger compound TRG_LIQUIDACION_COMPOUND</div>
+            <div class="section-item"><span class="section-num">06</span>Tipos objeto T_CONCEPTO_LIQ_OBJ y T_LISTA_LIQ_PIPE</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-preview">
+        <div class="code-topbar">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">PL/SQL · PKG_NOMINA (fragmento)</span>
+        </div>
+        <div class="code-body"><span class="cm">-- PARAMETROS base</span>
+<span class="kw">INSERT INTO</span> PARAMETROS <span class="kw">VALUES</span> (<span class="str">'SMLMV'</span>, <span class="num">1423500</span>, <span class="str">'Salario Minimo Legal Mensual 2026'</span>);
+<span class="kw">INSERT INTO</span> PARAMETROS <span class="kw">VALUES</span> (<span class="str">'PCT_SALUD'</span>, <span class="num">4</span>, <span class="str">'Aporte salud empleado'</span>);
+<span class="kw">INSERT INTO</span> PARAMETROS <span class="kw">VALUES</span> (<span class="str">'RECARGO_NOCTURNO'</span>, <span class="num">35</span>, <span class="str">'% recargo hora nocturna'</span>);
+
+<span class="cm">-- Funcion: salario base quincenal</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">FN_SALARIO_BASE_Q</span> (p_id <span class="kw">IN</span> NUMBER)
+<span class="kw">RETURN</span> NUMBER <span class="kw">IS</span>
+  v_salario EMPLEADOS.salario_mensual%<span class="kw">TYPE</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">SELECT</span> salario_mensual <span class="kw">INTO</span> v_salario
+  <span class="kw">FROM</span> EMPLEADOS <span class="kw">WHERE</span> id_empleado = p_id;
+  <span class="kw">RETURN</span> ROUND(v_salario / <span class="num">2</span>, <span class="num">2</span>);
+<span class="kw">END</span>;
+/</div>
+      </div>
+
+      <div class="taller-foot">
+        <span class="foot-info">NOMINA_ENTREGABLE_CORREGIDO.sql · 68 KB</span>
+        <div class="btn-group">
+          <a class="download-btn orange" href="/e-portafolio/NOMINA_ENTREGABLE_CORREGIDO.sql" download>
+            Descargar .sql
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TALLER 2 ── -->
+    <div class="taller">
+      <div class="taller-head">
+        <div>
+          <div class="taller-num">Taller 02 · SQL Avanzado · Plantilla</div>
+          <div class="taller-title">Ajuste Salarial con Transacciones ACID — Plantilla</div>
+          <div class="taller-sub">Plantilla oficial del docente para el Taller Aplicado 1 (variante 2). Cubre SQL avanzado con CTEs, window functions, consulta diagnostica, determinacion de elegibles, prevalidacion y ejecucion transaccional con SAVEPOINT, COMMIT y ROLLBACK sobre Oracle HR.</div>
+        </div>
+        <div class="taller-meta">
+          <span class="badge badge-sql">SQL Avanzado</span>
+          <span class="badge badge-acid">ACID</span>
+          <span class="badge badge-oracle">Oracle HR</span>
+        </div>
+      </div>
+
+      <div class="taller-body">
+        <div class="detail">
+          <span class="detail-label">Integrantes</span>
+          <span class="detail-val">Maria Valentina Osorio Romero<br>Juan Pablo Moreno Castro</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Variante asignada</span>
+          <span class="detail-val mono">Variante 2 · Tag P02_FINAL</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Fecha</span>
+          <span class="detail-val">08 de abril de 2026</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Tablas principales</span>
+          <span class="detail-val mono">T1_EMPLOYEES · T1_DEPARTMENTS<br>T1_JOB_HISTORY · AUDIT_SALARY_ADJUSTMENTS_T1</span>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Temas cubiertos</span>
+          <div class="temas-list">
+            <span class="tema-tag">CTEs (WITH)</span>
+            <span class="tema-tag">Window Functions</span>
+            <span class="tema-tag">SAVEPOINT</span>
+            <span class="tema-tag">COMMIT / ROLLBACK</span>
+            <span class="tema-tag">Consulta diagnostica</span>
+            <span class="tema-tag">Poblacion elegible</span>
+            <span class="tema-tag">Prevalidacion</span>
+            <span class="tema-tag">Auditoria de cambios</span>
+            <span class="tema-tag">UPDATE / MERGE</span>
+          </div>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Secciones de la plantilla</span>
+          <div class="sections-list">
+            <div class="section-item"><span class="section-num">0</span>Verificacion de variante asignada</div>
+            <div class="section-item"><span class="section-num">1</span>Consulta diagnostica — estadisticas por departamento</div>
+            <div class="section-item"><span class="section-num">2</span>Decision de poblacion elegible para ajuste</div>
+            <div class="section-item"><span class="section-num">3</span>Prevalidacion antes de la transaccion</div>
+            <div class="section-item"><span class="section-num">4</span>Ejecucion transaccional: INSERT auditoria + UPDATE salarios + validacion intermedia + control transaccional</div>
+            <div class="section-item"><span class="section-num">5</span>Validacion posterior al ajuste</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-preview">
+        <div class="code-topbar">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">SQL · Consulta diagnostica (fragmento)</span>
+        </div>
+        <div class="code-body"><span class="kw">WITH</span> dept_stats <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    e.department_id,
+    <span class="fn">AVG</span>(e.salary)  <span class="kw">AS</span> dept_avg_salary,
+    <span class="fn">MAX</span>(e.salary)  <span class="kw">AS</span> dept_max_salary,
+    <span class="fn">COUNT</span>(*)       <span class="kw">AS</span> dept_headcount
+  <span class="kw">FROM</span> T1_EMPLOYEES e
+  <span class="kw">WHERE</span> e.department_id <span class="kw">IS NOT NULL</span>
+  <span class="kw">GROUP BY</span> e.department_id
+)
+<span class="kw">SELECT</span>
+  e.employee_id,
+  e.first_name || <span class="str">' '</span> || e.last_name  <span class="kw">AS</span> nombre,
+  d.department_name,
+  e.salary,
+  ds.dept_avg_salary,
+  <span class="fn">ROUND</span>((ds.dept_avg_salary - e.salary) / ds.dept_avg_salary * <span class="num">100</span>, <span class="num">2</span>) <span class="kw">AS</span> gap_pct
+<span class="kw">FROM</span> T1_EMPLOYEES e
+<span class="kw">JOIN</span> T1_DEPARTMENTS d  <span class="kw">ON</span> e.department_id = d.department_id
+<span class="kw">JOIN</span> dept_stats ds     <span class="kw">ON</span> e.department_id = ds.department_id
+<span class="kw">ORDER BY</span> gap_pct <span class="kw">DESC</span>;</div>
+      </div>
+
+      <div class="taller-foot">
+        <span class="foot-info">03_template_entrega_taller1_v2.sql · 29 KB</span>
+        <div class="btn-group">
+          <a class="download-btn blue" href="/e-portafolio/03_template_entrega_taller1_v2.sql" download>
+            Descargar .sql
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TALLER 3 ── -->
+    <div class="taller">
+      <div class="taller-head">
+        <div>
+          <div class="taller-num">Taller 03 · SQL Avanzado · Entregable Final</div>
+          <div class="taller-title">Ajuste Salarial con Transacciones ACID — Entregable</div>
+          <div class="taller-sub">Entregable final del Taller Aplicado 1 (variante 2). Contiene la solucion completa desarrollada sobre la plantilla del docente: consulta diagnostica resuelta, logica de elegibilidad, prevalidacion, transaccion completa con auditoria y validacion posterior.</div>
+        </div>
+        <div class="taller-meta">
+          <span class="badge badge-sql">SQL Avanzado</span>
+          <span class="badge badge-acid">ACID</span>
+          <span class="badge badge-oracle">Oracle HR</span>
+        </div>
+      </div>
+
+      <div class="taller-body">
+        <div class="detail">
+          <span class="detail-label">Integrantes</span>
+          <span class="detail-val">Maria Valentina Osorio Romero<br>Juan Pablo Moreno Castro</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Variante / Tag</span>
+          <span class="detail-val mono">Variante 2 · P02_FINAL</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Fecha entrega</span>
+          <span class="detail-val">08 de abril de 2026</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">Estado</span>
+          <span class="detail-val" style="color:var(--green); font-weight:700">Entregado</span>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Temas cubiertos</span>
+          <div class="temas-list">
+            <span class="tema-tag">CTEs anidados</span>
+            <span class="tema-tag">Window Functions</span>
+            <span class="tema-tag">SAVEPOINT</span>
+            <span class="tema-tag">COMMIT / ROLLBACK</span>
+            <span class="tema-tag">UPDATE de salarios</span>
+            <span class="tema-tag">INSERT auditoria</span>
+            <span class="tema-tag">Validacion intermedia</span>
+            <span class="tema-tag">Reglas de elegibilidad</span>
+            <span class="tema-tag">Control transaccional</span>
+          </div>
+        </div>
+        <div class="detail" style="grid-column: 1 / -1;">
+          <span class="detail-label">Secciones completadas</span>
+          <div class="sections-list">
+            <div class="section-item"><span class="section-num">0</span>Verificacion de variante 2 — P02_FINAL</div>
+            <div class="section-item"><span class="section-num">1</span>Consulta diagnostica con estadisticas departamentales y gap salarial</div>
+            <div class="section-item"><span class="section-num">2</span>Logica de elegibilidad: antiguedad, historial, gap y tope maximo</div>
+            <div class="section-item"><span class="section-num">3</span>Prevalidacion de restricciones antes de modificar datos</div>
+            <div class="section-item"><span class="section-num">4</span>Ejecucion transaccional completa: SAVEPOINT, UPDATE, INSERT auditoria, validacion, COMMIT</div>
+            <div class="section-item"><span class="section-num">5</span>Validacion posterior con comparacion antes / despues</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-preview">
+        <div class="code-topbar">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">SQL · Ejecucion transaccional (fragmento)</span>
+        </div>
+        <div class="code-body"><span class="cm">-- 4.1 ACTUALIZACION DE SALARIOS</span>
+<span class="kw">SAVEPOINT</span> antes_ajuste;
+
+<span class="kw">UPDATE</span> T1_EMPLOYEES e
+<span class="kw">SET</span> e.salary = e.salary * (<span class="num">1</span> + v_raise_pct / <span class="num">100</span>)
+<span class="kw">WHERE</span> e.employee_id <span class="kw">IN</span> (
+  <span class="kw">SELECT</span> employee_id <span class="kw">FROM</span> elegibles
+);
+
+<span class="cm">-- 4.2 INSERCION EN AUDITORIA</span>
+<span class="kw">INSERT INTO</span> AUDIT_SALARY_ADJUSTMENTS_T1 (
+  execution_tag, variant_id, employee_id,
+  salary_before, salary_after, rule_applied, executed_at
+)
+<span class="kw">SELECT</span>
+  <span class="str">'P02_FINAL'</span>, <span class="num">2</span>, employee_id,
+  salary_before, salary_after, rule_applied, <span class="fn">SYSDATE</span>
+<span class="kw">FROM</span> elegibles;
+
+<span class="kw">COMMIT</span>;</div>
+      </div>
+
+      <div class="taller-foot">
+        <span class="foot-info">entregable_final.sql · 30 KB</span>
+        <div class="btn-group">
+          <a class="download-btn" href="/e-portafolio/entregable_final.sql" download>
+            Descargar .sql
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TALLER 4 ── -->
+    <div class="taller">
+      <div class="taller-head">
+        <div>
+          <div class="taller-num">Taller 04 · NoSQL & Bases de Datos Documentales</div>
+          <div class="taller-title">Colección de Scripts NoSQL — MongoDB</div>
+          <div class="taller-sub">Desarrollo de scripts de manipulación y consulta en MongoDB utilizando el dataset `sample_airbnb`. Incluye operaciones CRUD completas y consultas de agregación avanzadas sobre documentos JSON.</div>
+        </div>
+        <div class="taller-meta">
+          <span class="badge badge-plsql" style="background: rgba(94, 201, 148, 0.12); color: #5ec994; border: 1px solid rgba(94, 201, 148, 0.3)">MongoDB</span>
+          <span class="badge badge-oracle" style="background: rgba(199, 146, 234, 0.12); color: #c792ea; border: 1px solid rgba(199, 146, 234, 0.3)">NoSQL</span>
+        </div>
+      </div>
+
+      <div class="taller-body" style="grid-template-columns: 1fr; gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="detail">
+            <span class="detail-label">Integrantes</span>
+            <span class="detail-val">Maria Valentina Osorio Romero<br>Juan Pablo Moreno Castro</span>
+          </div>
+          <div class="detail">
+            <span class="detail-label">Motor de BD</span>
+            <span class="detail-val mono">MongoDB Atlas / Local</span>
+          </div>
+        </div>
+        
+        <div class="detail">
+          <span class="detail-label">Temas cubiertos</span>
+          <div class="temas-list">
+            <span class="tema-tag">Base de Datos NoSQL</span>
+            <span class="tema-tag">Estructura Documental (JSON)</span>
+            <span class="tema-tag">Operaciones CRUD</span>
+            <span class="tema-tag">Colección listingsAndReviews</span>
+            <span class="tema-tag">Filtros Avanzados</span>
+            <span class="tema-tag">Filtros en Arreglos y Objetos</span>
+            <span class="tema-tag">Proyecciones de Datos</span>
+          </div>
+        </div>
+
+        <div class="detail">
+          <span class="detail-label">Explorador de Scripts ({scripts.length} archivos)</span>
+          <div class="mongo-viewer-container">
+            <div class="script-selector-grid">
+              {scripts.map((script, idx) => (
+                <button class={`script-btn ${idx === 0 ? 'active' : ''}`} data-index={idx}>
+                  Script {String(idx + 1).padStart(2, '0')}
+                </button>
+              ))}
+            </div>
+            <div class="code-preview" style="margin: 0;">
+              <div class="code-topbar">
+                <div class="code-dots"><span></span><span></span><span></span></div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span class="code-lang" id="current-script-name">Script 1</span>
+                  <a id="single-download-btn" href="#" class="download-script-icon-btn" title="Descargar este script">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </a>
+                </div>
+              </div>
+              <pre class="code-body" id="script-code-display" style="max-height: 350px; text-align: left; white-space: pre-wrap; word-break: break-all; margin: 0;"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="taller-foot">
+        <span class="foot-info">Taller_Mongo.zip · 1.6 MB</span>
+        <div class="btn-group">
+          <a class="download-btn green" href="/e-portafolio/Taller_Mongo.zip" download>
+            Descargar Taller_Mongo.zip
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-area">
+    <a class="back-link" href="/e-portafolio/evidencia">← Volver a Evidencias</a>
+  </div>
+
+  <script is:inline define:vars={{ scripts }}>
+    window.mongoScripts = scripts;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const buttons = document.querySelectorAll('.script-btn');
+      const nameDisplay = document.getElementById('current-script-name');
+      const codeDisplay = document.getElementById('script-code-display');
+      const singleDownloadBtn = document.getElementById('single-download-btn');
+
+      function highlightMongo(code) {
+        if (!code) return '';
+        // Escape HTML
+        let escaped = code
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        
+        // Highlight strings first (double and single quotes)
+        escaped = escaped.replace(/(["'])(.*?)\1/g, '<span class="str">$1$2$1</span>');
+        
+        // Highlight comments (double slash)
+        escaped = escaped.replace(/(\/\/.*)/g, '<span class="cm">$1</span>');
+        
+        // MongoDB keywords and operations
+        const keywords = ['use', 'db', 'insertOne', 'insertMany', 'find', 'findOne', 'updateOne', 'updateMany', 'deleteOne', 'deleteMany', 'aggregate', 'limit', 'sort', 'project', 'match', 'group', 'unwind'];
+        keywords.forEach(kw => {
+          const regex = new RegExp(`\\b${kw}\\b`, 'g');
+          escaped = escaped.replace(regex, `<span class="kw">${kw}</span>`);
+        });
+
+        // Types
+        const types = ['NumberDecimal', 'ObjectId', 'ISODate'];
+        types.forEach(t => {
+          const regex = new RegExp(`\\b${t}\\b`, 'g');
+          escaped = escaped.replace(regex, `<span class="fn">${t}</span>`);
+        });
+
+        // Numbers (only outside HTML tags)
+        escaped = escaped.replace(/\b(\d+(?:\.\d+)?)\b(?![^<]*>)/g, '<span class="num">$1</span>');
+
+        return escaped;
+      }
+
+      function showScript(index) {
+        const script = window.mongoScripts[index];
+        if (!script) return;
+
+        nameDisplay.textContent = script.name;
+        codeDisplay.innerHTML = highlightMongo(script.content);
+        
+        // Setup download link
+        if (singleDownloadBtn) {
+          const blob = new Blob([script.content], { type: 'text/plain' });
+          if (singleDownloadBtn.dataset.blobUrl) {
+            URL.revokeObjectURL(singleDownloadBtn.dataset.blobUrl);
+          }
+          const url = URL.createObjectURL(blob);
+          singleDownloadBtn.href = url;
+          singleDownloadBtn.download = script.name;
+          singleDownloadBtn.dataset.blobUrl = url;
+        }
+      }
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const index = parseInt(btn.getAttribute('data-index'), 10);
+          showScript(index);
+        });
+      });
+
+      // Initialize with the first script
+      showScript(0);
+    });
+  </script>
+
+</body>
+</html>

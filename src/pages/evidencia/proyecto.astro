@@ -1,0 +1,512 @@
+---
+---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto Nexus | E-Portafolio · BD2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #141720;
+      --surface2: #1c2030;
+      --border: #252b3d;
+      --accent: #82aaff;
+      --accent-dim: rgba(130,170,255,0.12);
+      --green: #5ec994;
+      --green-dim: rgba(94,201,148,0.12);
+      --orange: #f08060;
+      --orange-dim: rgba(240,128,96,0.12);
+      --yellow: #f0c96a;
+      --yellow-dim: rgba(240,201,106,0.12);
+      --text: #e2e6f0;
+      --muted: #6b7394;
+      --subtle: #3a4060;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .site-header {
+      border-bottom: 1px solid var(--border); padding: 18px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0;
+      background: rgba(13,15,20,0.92); backdrop-filter: blur(12px); z-index: 100;
+    }
+    .logo { font-size: 0.78rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+    .header-nav { display: flex; gap: 28px; }
+    .header-nav a { text-decoration: none; color: var(--muted); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; transition: color 0.2s; }
+    .header-nav a:hover, .header-nav a.active { color: var(--text); }
+
+    /* ── HERO ── */
+    .hero { padding: 72px 40px 48px; max-width: 1100px; margin: 0 auto; }
+    .hero-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: block; }
+    .hero-title { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.05; margin-bottom: 16px; letter-spacing: -1.5px; }
+    .hero-title span { color: var(--accent); }
+    .hero-sub { color: var(--muted); font-size: 0.95rem; max-width: 560px; line-height: 1.7; }
+
+    /* ── LAYOUT ── */
+    .section { max-width: 1100px; margin: 0 auto; padding: 0 40px 32px; }
+    .section-title {
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px 32px; transition: border-color 0.2s;
+      animation: slideUp 0.4s ease both;
+    }
+    .card:hover { border-color: var(--subtle); }
+    .card.full { grid-column: 1 / -1; }
+    .card-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.63rem; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px; }
+    .card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; }
+    .card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+    .card p { color: var(--muted); font-size: 0.88rem; line-height: 1.75; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── TEAM ── */
+    .team-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .team-list li {
+      padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .team-list li.lider { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .team-role { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; opacity: 0.7; font-weight: 400; }
+
+    /* ── STACK BADGES ── */
+    .stack-group { margin-bottom: 18px; }
+    .stack-group:last-child { margin-bottom: 0; }
+    .stack { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge { padding: 5px 13px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.4px; }
+    .badge-py    { background: var(--orange-dim); color: var(--orange); }
+    .badge-web   { background: var(--accent-dim); color: var(--accent); }
+    .badge-db    { background: var(--green-dim);  color: var(--green); }
+    .badge-mongo { background: var(--green-dim);  color: var(--green); }
+    .badge-os    { background: var(--yellow-dim); color: var(--yellow); }
+
+    /* ── REPOS ── */
+    .repo-card {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 22px; text-decoration: none; color: var(--text);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .repo-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .repo-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .repo-icon { font-size: 1.2rem; }
+    .repo-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .repo-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+    .repo-arrow { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; transition: color 0.2s; }
+    .repo-card:hover .repo-arrow { color: var(--accent); }
+    .repo-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .repo-tag { padding: 3px 10px; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── ENTREGABLES / HITOS ── */
+    .hitos-list { display: flex; flex-direction: column; gap: 0; }
+    .hito {
+      display: grid; grid-template-columns: 48px 1fr auto;
+      align-items: start; gap: 16px; padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .hito:last-child { border-bottom: none; }
+    .hito-num {
+      width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; font-weight: 600;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--muted); flex-shrink: 0;
+    }
+    .hito-num.done { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .hito-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; }
+    .hito-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .hito-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); white-space: nowrap; padding-top: 4px; }
+
+    /* ── ARCHITECTURE LAYERS ── */
+    .arch-layers { display: flex; flex-direction: column; gap: 10px; }
+    .arch-layer {
+      border-radius: 12px; padding: 16px 20px;
+      border: 1px solid var(--border); background: var(--surface2);
+    }
+    .arch-layer-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .arch-layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .arch-layer p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
+    .layer-front .arch-layer-dot { background: var(--accent); }
+    .layer-back  .arch-layer-dot { background: var(--orange); }
+    .layer-data  .arch-layer-dot { background: var(--green); }
+    .arch-arrow { text-align: center; color: var(--muted); font-size: 0.9rem; padding: 2px 0; }
+
+    /* ── INFRA ── */
+    .infra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .infra-item {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .infra-item h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .infra-item p { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+    .infra-badge { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; padding: 2px 8px; border-radius: 6px; }
+
+    /* ── ALCANCE ── */
+    .scope-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .scope-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+    .scope-list li::before { content: '+'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .scope-list.out li::before { content: 'x'; color: var(--orange); }
+
+    /* ── FOOTER ── */
+    .footer-area { max-width: 1100px; margin: 0 auto; padding: 8px 40px 60px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--muted); font-size: 0.82rem; font-weight: 600; transition: color 0.2s; }
+    .back-link:hover { color: var(--text); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .site-header { padding: 16px 20px; }
+      .hero { padding: 48px 20px 32px; }
+      .section { padding: 0 20px 28px; }
+      .footer-area { padding: 8px 20px 40px; }
+      .grid-2, .grid-3, .infra-grid { grid-template-columns: 1fr; }
+      .hito { grid-template-columns: 40px 1fr; }
+      .hito-date { grid-column: 2; padding-top: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">E-Portafolio · BD2</span>
+    <nav class="header-nav">
+      <a href="/e-portafolio/">Inicio</a>
+      <a href="/e-portafolio/presentacion">Presentación</a>
+      <a href="/e-portafolio/evidencia" class="active">Evidencias</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="hero-eyebrow">Proyecto Final · BD2 · 2026</span>
+    <h1 class="hero-title">Proyecto<br><span>Nexus</span></h1>
+    <p class="hero-sub">Marketplace de productos tecnológicos con arquitectura de datos híbrida — MySQL + MongoDB, backend en Python y frontend web.</p>
+  </section>
+
+  <!-- ── EQUIPO + STACK ── -->
+  <div class="section">
+    <p class="section-title">Equipo & tecnologías</p>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-label">Integrantes del proyecto</div>
+        <h2>Equipo</h2>
+        <ul class="team-list">
+          <li>
+            Maria Valentina Osorio Romero
+            <span class="team-role">Frontend · SQL · Gestión</span>
+          </li>
+          <li class="lider">
+            Estefanía Paredes Castañeda
+            <span class="team-role">Líder · MongoDB · Diseño</span>
+          </li>
+          <li>
+            Santiago Rojas Galeano
+            <span class="team-role">Backend · MySQL · Infra</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Stack tecnológico</div>
+        <h2>Tecnologías</h2>
+        <div class="stack-group">
+          <div class="card-label" style="margin-bottom:8px">Backend</div>
+          <div class="stack"><span class="badge badge-py">Python</span></div>
+        </div>
+        <div class="stack-group">
+          <div class="card-label" style="margin-bottom:8px">Frontend</div>
+          <div class="stack">
+            <span class="badge badge-web">HTML5</span>
+            <span class="badge badge-web">CSS3</span>
+            <span class="badge badge-web">JavaScript</span>
+          </div>
+        </div>
+        <div class="stack-group">
+          <div class="card-label" style="margin-bottom:8px">Bases de datos</div>
+          <div class="stack">
+            <span class="badge badge-db">MySQL 8.0</span>
+            <span class="badge badge-mongo">MongoDB</span>
+          </div>
+        </div>
+        <div class="stack-group">
+          <div class="card-label" style="margin-bottom:8px">Infraestructura</div>
+          <div class="stack">
+            <span class="badge badge-os">Ubuntu 22.04 LTS</span>
+            <span class="badge badge-os">Ubuntu 24.04 LTS</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── REPOSITORIOS ── -->
+  <div class="section">
+    <p class="section-title">Repositorios GitHub</p>
+    <div class="grid-2">
+
+      <a class="repo-card" href="https://github.com/mariaromero11042004-art/Front-nexus" target="_blank" rel="noopener">
+        <div class="repo-top">
+          <div>
+            <div class="repo-name">Front-nexus</div>
+            <div class="repo-desc">Interfaz web del marketplace — catálogo de productos, carrito de compras, panel de administración y flujo de pedidos.</div>
+          </div>
+          <span class="repo-arrow">↗</span>
+        </div>
+        <div class="repo-tags">
+          <span class="repo-tag">HTML</span>
+          <span class="repo-tag">CSS</span>
+          <span class="repo-tag">JavaScript</span>
+          <span class="repo-tag">Frontend</span>
+        </div>
+      </a>
+
+      <a class="repo-card" href="https://github.com/mariaromero11042004-art/Conexiones-BD-II" target="_blank" rel="noopener">
+        <div class="repo-top">
+          <div>
+            <div class="repo-name">Conexiones-BD-II</div>
+            <div class="repo-desc">Backend en Python — conexión e integración con MySQL y MongoDB, lógica de negocio, stored procedures y consultas.</div>
+          </div>
+          <span class="repo-arrow">↗</span>
+        </div>
+        <div class="repo-tags">
+          <span class="repo-tag">Python</span>
+          <span class="repo-tag">MySQL</span>
+          <span class="repo-tag">MongoDB</span>
+          <span class="repo-tag">Backend</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ALCANCE ── -->
+  <div class="section">
+    <p class="section-title">Alcance del proyecto</p>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-label">Incluido en el alcance</div>
+        <h2>¿Qué hace Nexus?</h2>
+        <ul class="scope-list">
+          <li>Gestión de usuarios con registro, login y dos roles (comprador / administrador)</li>
+          <li>Catálogo de productos con 8 categorías: celulares, computadores, televisores, electrodomésticos, videojuegos, accesorios, smartwatch y tabletas</li>
+          <li>Carrito de compras con flujo de pedidos (pendiente / enviado / entregado)</li>
+          <li>Reseñas y comentarios de clientes sobre productos</li>
+          <li>Panel de administración para gestionar inventario, pedidos, pagos y usuarios</li>
+          <li>Reportes analíticos: ventas por categoría, productos más vendidos e ingresos por periodo</li>
+          <li>Arquitectura híbrida MySQL + MongoDB con integración en capa de aplicación</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Fuera del alcance</div>
+        <h2>Exclusiones</h2>
+        <ul class="scope-list out">
+          <li>Integración con pasarelas de pago reales</li>
+          <li>Rastreo logístico en tiempo real con transportistas externos</li>
+          <li>Mensajería directa entre usuarios</li>
+          <li>Notificaciones automáticas por correo o SMS</li>
+          <li>Optimización de infraestructura para producción a gran escala</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ARQUITECTURA ── -->
+  <div class="section">
+    <p class="section-title">Modelo de arquitectura</p>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-label">Capas del sistema</div>
+        <h2>Arquitectura de 3 capas</h2>
+        <div class="arch-layers">
+
+          <div class="arch-layer layer-front">
+            <div class="arch-layer-title">
+              <span class="arch-layer-dot"></span>
+              Capa de Presentación
+            </div>
+            <p>Interfaz web con HTML5, CSS3 y JavaScript. Permite explorar el catálogo, gestionar el carrito, realizar pedidos y publicar reseñas. Incluye panel de administración.</p>
+          </div>
+
+          <div class="arch-arrow">↓ HTTP ↓</div>
+
+          <div class="arch-layer layer-back">
+            <div class="arch-layer-title">
+              <span class="arch-layer-dot"></span>
+              Capa de Aplicación (Backend)
+            </div>
+            <p>Desarrollada en Python. Implementa la lógica de negocio: autenticación, flujo de pedidos, sincronización entre motores de BD y ejecución de stored procedures y triggers.</p>
+          </div>
+
+          <div class="arch-arrow">↓ Drivers ↓</div>
+
+          <div class="arch-layer layer-data">
+            <div class="arch-layer-title">
+              <span class="arch-layer-dot"></span>
+              Capa de Datos (Híbrida)
+            </div>
+            <p><strong style="color:var(--green)">MySQL:</strong> datos transaccionales — usuarios, pedidos, pagos, inventario (12 tablas, 3FN). <strong style="color:var(--green)">MongoDB:</strong> datos flexibles — especificaciones técnicas, reseñas y catálogo dinámico.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Decisiones técnicas</div>
+        <h2>Diseño del sistema</h2>
+        <p style="margin-bottom:16px">La integración entre motores ocurre únicamente en la capa de aplicación mediante los campos de enlace <code style="font-family:'IBM Plex Mono';font-size:0.8rem;background:var(--surface2);padding:2px 6px;border-radius:4px">productoId</code> y <code style="font-family:'IBM Plex Mono';font-size:0.8rem;background:var(--surface2);padding:2px 6px;border-radius:4px">clienteId</code>.</p>
+        <div class="infra-grid" style="grid-template-columns:1fr;gap:10px">
+          <div class="infra-item">
+            <h4>MySQL 8.0.45 <span class="infra-badge badge-db">Relacional</span></h4>
+            <p>Modelo 3FN · 12 tablas · Stored procedures · Funciones · Triggers · Transacciones ACID · Window Functions para reportes</p>
+          </div>
+          <div class="infra-item">
+            <h4>MongoDB <span class="infra-badge badge-mongo">Documental</span></h4>
+            <p>Patrón Atributo para specs técnicas · Patrón Subconjunto para últimas 3 reseñas embebidas · JSON Schema validators · Eliminación lógica</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── INFRAESTRUCTURA ── -->
+  <div class="section">
+    <p class="section-title">Infraestructura utilizada</p>
+    <div class="card full">
+      <div class="card-label">Servidores y entorno de despliegue</div>
+      <h2>Máquinas Virtuales Linux</h2>
+      <p style="margin-bottom:20px">Cada motor de base de datos se desplegó en una VM Linux independiente para garantizar aislamiento, modularidad y optimización específica por carga de trabajo.</p>
+      <div class="infra-grid">
+        <div class="infra-item">
+          <h4>VM 1 — MySQL <span class="infra-badge badge-os" style="background:var(--yellow-dim);color:var(--yellow)">Ubuntu 22.04 LTS</span></h4>
+          <p>Ubuntu 22.04.5 LTS — estabilidad comprobada para RDBMS relacionales. Aloja MySQL 8.0.45 con soporte completo de transacciones ACID, stored procedures y window functions. Backup con mysqldump + binary logs rotados por hora. Alta disponibilidad con MySQL InnoDB Cluster + MySQL Router.</p>
+        </div>
+        <div class="infra-item">
+          <h4>VM 2 — MongoDB <span class="infra-badge badge-os" style="background:var(--yellow-dim);color:var(--yellow)">Ubuntu 24.04 LTS</span></h4>
+          <p>Ubuntu 24.04 LTS — optimizaciones modernas del kernel en gestión de memoria e I/O, críticos para bases de datos documentales. Replica Set de 3 nodos (1 primario + 2 secundarios). Failover automático en ~10 segundos. Backup con mongodump comprimido + cron.</p>
+        </div>
+        <div class="infra-item">
+          <h4>Estrategia de Backup <span class="infra-badge" style="background:var(--accent-dim);color:var(--accent)">3-2-1</span></h4>
+          <p>Tres copias de datos, dos medios distintos (local + nube) y una copia offsite. RPO: 1 hora · RTO: 2 horas para ambos motores. Respaldos lógicos diarios y semanales automatizados con cron.</p>
+        </div>
+        <div class="infra-item">
+          <h4>Integración <span class="infra-badge badge-py">Python Bridge</span></h4>
+          <p>No existen conectores nativos entre MySQL y MongoDB. La capa de aplicación Python gestiona la consistencia de los identificadores compartidos y coordina las operaciones entre ambos motores en cada transacción.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ENTREGABLES / HITOS ── -->
+  <div class="section">
+    <p class="section-title">Hitos y entregables</p>
+    <div class="card full">
+      <div class="card-label">Cronograma de entrega · Feb – May 2025</div>
+      <h2>8 Hitos del proyecto</h2>
+      <div class="hitos-list" style="margin-top:16px">
+
+        <div class="hito">
+          <div class="hito-num done">H1</div>
+          <div>
+            <div class="hito-title">Propuesta aprobada</div>
+            <div class="hito-desc">Documento de propuesta · Documento de supuestos · Definición de alcance · Gantt · RACI · Gestión de riesgos</div>
+          </div>
+          <div class="hito-date">02 mar 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H2</div>
+          <div>
+            <div class="hito-title">Modelado completo</div>
+            <div class="hito-desc">Modelo E-R notación Peter Chen · Modelo relacional Crow's Foot en Oracle Data Modeler / Workbench</div>
+          </div>
+          <div class="hito-date">23 mar 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H3</div>
+          <div>
+            <div class="hito-title">Entrega Fase 1</div>
+            <div class="hito-desc">Todos los modelos · Diccionario de datos · Análisis de selección de SO · Selección de RDBMS</div>
+          </div>
+          <div class="hito-date">30 mar 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H4</div>
+          <div>
+            <div class="hito-title">Infraestructura lista</div>
+            <div class="hito-desc">VM implementada en Linux · MySQL instalado y configurado · Conexiones de red validadas</div>
+          </div>
+          <div class="hito-date">13 abr 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H5</div>
+          <div>
+            <div class="hito-title">BD relacional completa</div>
+            <div class="hito-desc">Scripts de creación e inserción · Stored procedures · Funciones · Triggers · Transacciones · Manejo de excepciones</div>
+          </div>
+          <div class="hito-date">04 may 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H6</div>
+          <div>
+            <div class="hito-title">MongoDB integrado</div>
+            <div class="hito-desc">Modelo documental · CRUD funcional · Consultas complejas · Agregaciones · Justificación técnica de patrones</div>
+          </div>
+          <div class="hito-date">04 may 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H7</div>
+          <div>
+            <div class="hito-title">App web + integración BD</div>
+            <div class="hito-desc">Conexión app–MySQL · Conexión app–MongoDB · Demostración de operaciones · Evidencia de stored procedures en producción</div>
+          </div>
+          <div class="hito-date">11 may 2025</div>
+        </div>
+
+        <div class="hito">
+          <div class="hito-num done">H8</div>
+          <div>
+            <div class="hito-title">Entrega final completa</div>
+            <div class="hito-desc">Informe ejecutivo (máx. 5 págs.) · Video demostrativo (máx. 15 min) · Repositorio Git con historial completo</div>
+          </div>
+          <div class="hito-date">18 may 2025</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-area">
+    <a class="back-link" href="/e-portafolio/evidencia">← Volver a Evidencias</a>
+  </div>
+
+</body>
+</html>

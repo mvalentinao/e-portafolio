@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.find( 
+  { beds: { $gt: 5 } }, 
+  { _id: 0, name: 1, number_of_reviews: 1 } 
+)

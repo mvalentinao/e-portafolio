@@ -1,0 +1,21 @@
+use ("sample_airbnb") 
+ 
+db.listingsAndReviews.aggregate([ 
+  { $project: { name: 1, price: 1, "host.host_id": 1 } }, 
+  { 
+    $lookup: { 
+      from: "hosts", 
+      localField: "host.host_id", 
+      foreignField: "host_id", 
+      as: "host_info" 
+    } 
+  }, 
+  { $unwind: { path: "$host_info", preserveNullAndEmptyArrays: true } }, 
+  { 
+    $project: { 
+      name: 1, price: 1, 
+      host_name: "$host_info.host_name", 
+      host_is_superhost: "$host_info.host_is_superhost" 
+    } 
+  } 
+])

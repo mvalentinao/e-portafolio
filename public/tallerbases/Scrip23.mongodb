@@ -1,0 +1,13 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.aggregate([ 
+  { $unwind: "$amenities" }, 
+  { 
+    $group: { 
+      _id: "$amenities", 
+      frecuencia: { $sum: 1 } 
+    } 
+  }, 
+  { $sort: { frecuencia: -1 } }, 
+  { $limit: 5 },
+])

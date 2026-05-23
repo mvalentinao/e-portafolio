@@ -1,0 +1,11 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.find( 
+  { 
+    $and: [ 
+      { property_type: "Apartment" }, 
+      { "address.market": "New York" } 
+    ] 
+  }, 
+  { _id: 0, name: 1, property_type: 1, "address.market": 1 } 
+) 

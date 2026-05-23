@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.updateOne( 
+  { name: "Cozy Cabin Retreat" }, 
+  { $set: { property_type: "Entire home/apt" } } 
+)

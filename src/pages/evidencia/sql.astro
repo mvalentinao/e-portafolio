@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicios de Base de Datos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #141720;
+      --surface2: #1c2030;
+      --border: #252b3d;
+      --sql-accent: #f0c96a;
+      --sql-dim: rgba(240,201,106,0.12);
+      --plsql-accent: #f08060;
+      --plsql-dim: rgba(240,128,96,0.12);
+      --mongo-accent: #5ec994;
+      --mongo-dim: rgba(94,201,148,0.12);
+      --text: #e2e6f0;
+      --muted: #6b7394;
+      --subtle: #3a4060;
+
+      --kw: #c792ea;
+      --fn: #82aaff;
+      --str: #c3e88d;
+      --num: #f78c6c;
+      --op: #89ddff;
+      --cm: #546e7a;
+      --key: #ffcb6b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(13,15,20,0.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .header-nav { display: flex; gap: 28px; }
+    .header-nav a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+    .header-nav a:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 72px 40px 48px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      letter-spacing: -1.5px;
+    }
+
+    .hero-title span { color: var(--sql-accent); }
+
+    .hero-sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    /* ── Tabs ── */
+    .tabs-bar {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 14px 24px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--subtle);
+      transition: background 0.2s;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn[data-tab="sql"].active    { color: var(--sql-accent);   border-color: var(--sql-accent); }
+    .tab-btn[data-tab="plsql"].active  { color: var(--plsql-accent); border-color: var(--plsql-accent); }
+    .tab-btn[data-tab="mongo"].active  { color: var(--mongo-accent); border-color: var(--mongo-accent); }
+
+    .tab-btn[data-tab="sql"].active    .dot { background: var(--sql-accent); }
+    .tab-btn[data-tab="plsql"].active  .dot { background: var(--plsql-accent); }
+    .tab-btn[data-tab="mongo"].active  .dot { background: var(--mongo-accent); }
+
+    /* ── Content ── */
+    .content-area {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 40px 80px;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Exercise Card ── */
+    .ex-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      animation: slideUp 0.35s ease both;
+    }
+
+    .ex-card:hover { border-color: var(--subtle); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ex-card:nth-child(1) { animation-delay: 0.05s; }
+    .ex-card:nth-child(2) { animation-delay: 0.10s; }
+    .ex-card:nth-child(3) { animation-delay: 0.15s; }
+    .ex-card:nth-child(4) { animation-delay: 0.20s; }
+    .ex-card:nth-child(5) { animation-delay: 0.25s; }
+    .ex-card:nth-child(6) { animation-delay: 0.30s; }
+    .ex-card:nth-child(7) { animation-delay: 0.35s; }
+
+    .card-header {
+      padding: 22px 28px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-meta { flex: 1; }
+
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .badge-sql    { background: var(--sql-dim);   color: var(--sql-accent); }
+    .badge-plsql  { background: var(--plsql-dim); color: var(--plsql-accent); }
+    .badge-mongo  { background: var(--mongo-dim); color: var(--mongo-accent); }
+
+    .ex-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .card h3 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 4px;
+      letter-spacing: -0.3px;
+    }
+
+    .enunciado {
+      margin: 16px 28px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border-left: 3px solid transparent;
+      font-size: 0.875rem;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    .sql-enunciado   { background: var(--sql-dim);   border-color: var(--sql-accent); }
+    .plsql-enunciado { background: var(--plsql-dim); border-color: var(--plsql-accent); }
+    .mongo-enunciado { background: var(--mongo-dim); border-color: var(--mongo-accent); }
+
+    /* ── Code Block ── */
+    .code-wrapper {
+      position: relative;
+      margin: 0 0 0;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+    }
+
+    .code-lang {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.5px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--subtle);
+      color: var(--text);
+    }
+
+    pre {
+      background: #0a0c11;
+      padding: 22px 24px;
+      overflow-x: auto;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.75;
+      margin: 0;
+      tab-size: 2;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    pre::-webkit-scrollbar { height: 6px; }
+    pre::-webkit-scrollbar-track { background: transparent; }
+    pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Syntax tokens */
+    .kw  { color: #c792ea; }
+    .fn  { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .num { color: #f78c6c; }
+    .op  { color: #89ddff; }
+    .cm  { color: #546e7a; font-style: italic; }
+    .key { color: #ffcb6b; }
+    .pun { color: #697098; }
+    .id  { color: #e2e6f0; }
+    .fld { color: #f07178; }
+
+    /* ── Footer nav ── */
+    .footer-area {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 40px 60px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      .site-header { padding: 16px 20px; }
+      .hero { padding: 48px 20px 32px; }
+      .tabs-bar { padding: 0 20px; overflow-x: auto; }
+      .content-area { padding: 28px 20px 60px; }
+      .footer-area { padding: 0 20px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">E-Portafolio · BD2</span>
+    <nav class="header-nav">
+      <a href="/e-portafolio/">Inicio</a>
+      <a href="/e-portafolio/presentacion">Presentación</a>
+      <a href="/e-portafolio/evidencia">Evidencias</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <p class="hero-eyebrow">
+    <h1 class="hero-title">Bases de <span>Datos</span></h1>
+    <p class="hero-sub">Colección de consultas y bloques organizados por tecnología: SQL relacional, PL/SQL procedimental y MongoDB NoSQL.</p>
+  </section>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="sql">
+      <span class="dot"></span> SQL
+    </button>
+    <button class="tab-btn" data-tab="plsql">
+      <span class="dot"></span> PL/SQL
+    </button>
+    <button class="tab-btn" data-tab="mongo">
+      <span class="dot"></span> MongoDB
+    </button>
+  </div>
+
+  <div class="content-area">
+
+    
+    <div class="section active" id="tab-sql">
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-sql">SQL</span>
+            <div class="ex-num">Ejercicio 01</div>
+            <h3>Empleados con más de un cargo</h3>
+          </div>
+        </div>
+        <p class="enunciado sql-enunciado">
+          Obtén el nombre completo y el total de cargos que ha tenido cada empleado a lo largo de su historial laboral.
+          Solo incluye a los empleados que hayan tenido al menos un cargo anterior, y ordena los resultados
+          de mayor a menor según el número total de cargos ocupados.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">oracle sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">SELECT</span> <span class="fn">CONCAT</span><span class="pun">(</span><span class="id">e</span><span class="pun">.</span><span class="fld">first_name</span><span class="pun">,</span> <span class="id">e</span><span class="pun">.</span><span class="fld">last_name</span><span class="pun">)</span>  <span class="kw">AS</span> <span class="str">"Nombre Completo"</span><span class="pun">,</span>
+       <span class="fn">COUNT</span><span class="pun">(</span><span class="id">jh</span><span class="pun">.</span><span class="fld">employee_id</span><span class="pun">)</span> <span class="op">+</span> <span class="num">1</span>          <span class="kw">AS</span> <span class="str">"Total de Cargos"</span>
+<span class="kw">FROM</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">employees</span> <span class="id">e</span>
+<span class="kw">JOIN</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">job_history</span> <span class="id">jh</span> <span class="kw">ON</span> <span class="id">e</span><span class="pun">.</span><span class="fld">employee_id</span> <span class="op">=</span> <span class="id">jh</span><span class="pun">.</span><span class="fld">employee_id</span>
+<span class="kw">GROUP BY</span> <span class="id">e</span><span class="pun">.</span><span class="fld">employee_id</span><span class="pun">,</span> <span class="id">e</span><span class="pun">.</span><span class="fld">first_name</span><span class="pun">,</span> <span class="id">e</span><span class="pun">.</span><span class="fld">last_name</span>
+<span class="kw">HAVING</span> <span class="fn">COUNT</span><span class="pun">(</span><span class="id">jh</span><span class="pun">.</span><span class="fld">employee_id</span><span class="pun">)</span> <span class="op">>=</span> <span class="num">1</span>
+<span class="kw">ORDER BY</span> <span class="str">"Total de Cargos"</span> <span class="kw">DESC</span><span class="pun">;</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-sql">SQL</span>
+            <div class="ex-num">Ejercicio 02</div>
+            <h3>Empleados en Europa con salario entre $4.000 y $6.000</h3>
+          </div>
+        </div>
+        <p class="enunciado sql-enunciado">
+          Identifica todos los empleados que vivan o trabajen en Europa y tengan un salario entre 4.000 y 6.000 dólares.
+          Muestra el nombre completo en una sola columna, el país al que pertenece y su salario.
+          Se encadenan múltiples JOINs para relacionar empleados con su ubicación geográfica y región.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">oracle sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">SELECT</span> <span class="id">e</span><span class="pun">.</span><span class="fld">first_name</span> <span class="op">||</span> <span class="str">' '</span> <span class="op">||</span> <span class="id">e</span><span class="pun">.</span><span class="fld">last_name</span> <span class="kw">AS</span> <span class="str">"Nombre Completo"</span><span class="pun">,</span>
+       <span class="id">c</span><span class="pun">.</span><span class="fld">country_name</span>                     <span class="kw">AS</span> <span class="str">"País"</span><span class="pun">,</span>
+       <span class="id">e</span><span class="pun">.</span><span class="fld">salary</span>                           <span class="kw">AS</span> <span class="str">"Salario"</span>
+<span class="kw">FROM</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">employees</span>   <span class="id">e</span>
+<span class="kw">JOIN</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">departments</span> <span class="id">d</span> <span class="kw">ON</span> <span class="id">e</span><span class="pun">.</span><span class="fld">department_id</span> <span class="op">=</span> <span class="id">d</span><span class="pun">.</span><span class="fld">department_id</span>
+<span class="kw">JOIN</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">locations</span>   <span class="id">l</span> <span class="kw">ON</span> <span class="id">d</span><span class="pun">.</span><span class="fld">location_id</span>   <span class="op">=</span> <span class="id">l</span><span class="pun">.</span><span class="fld">location_id</span>
+<span class="kw">JOIN</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">countries</span>   <span class="id">c</span> <span class="kw">ON</span> <span class="id">l</span><span class="pun">.</span><span class="fld">country_id</span>    <span class="op">=</span> <span class="id">c</span><span class="pun">.</span><span class="fld">country_id</span>
+<span class="kw">JOIN</span>   <span class="id">hr</span><span class="pun">.</span><span class="id">regions</span>     <span class="id">r</span> <span class="kw">ON</span> <span class="id">c</span><span class="pun">.</span><span class="fld">region_id</span>     <span class="op">=</span> <span class="id">r</span><span class="pun">.</span><span class="fld">region_id</span>
+<span class="kw">WHERE</span>  <span class="id">r</span><span class="pun">.</span><span class="fld">region_name</span> <span class="op">=</span> <span class="str">'Europe'</span>
+  <span class="kw">AND</span>  <span class="id">e</span><span class="pun">.</span><span class="fld">salary</span> <span class="kw">BETWEEN</span> <span class="num">4000</span> <span class="kw">AND</span> <span class="num">6000</span>
+<span class="kw">ORDER BY</span> <span class="id">e</span><span class="pun">.</span><span class="fld">salary</span><span class="pun">;</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-sql">SQL</span>
+            <div class="ex-num">Ejercicio 03</div>
+            <h3>Jerarquía de empleados con emails enmascarados</h3>
+          </div>
+        </div>
+        <p class="enunciado sql-enunciado">
+          Proyecta el orden jerárquico de los cargos mostrando el nombre del empleado y el de su jefe directo.
+          Extrae los correos de ambos mostrando solo las primeras 3 letras y rellenando 6 asteriscos a la izquierda.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">oracle sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">SELECT</span> <span class="id">e</span><span class="pun">.</span><span class="fld">first_name</span> <span class="op">||</span> <span class="str">' '</span> <span class="op">||</span> <span class="id">e</span><span class="pun">.</span><span class="fld">last_name</span>       <span class="kw">AS</span> <span class="str">"Empleado"</span><span class="pun">,</span>
+       <span class="fn">LPAD</span><span class="pun">(</span><span class="fn">SUBSTR</span><span class="pun">(</span><span class="id">e</span><span class="pun">.</span><span class="fld">email</span><span class="pun">,</span> <span class="num">1</span><span class="pun">,</span> <span class="num">3</span><span class="pun">),</span> <span class="num">9</span><span class="pun">,</span> <span class="str">'*'</span><span class="pun">)</span>      <span class="kw">AS</span> <span class="str">"Email Empleado"</span><span class="pun">,</span>
+       <span class="id">m</span><span class="pun">.</span><span class="fld">first_name</span> <span class="op">||</span> <span class="str">' '</span> <span class="op">||</span> <span class="id">m</span><span class="pun">.</span><span class="fld">last_name</span>       <span class="kw">AS</span> <span class="str">"Jefe"</span><span class="pun">,</span>
+       <span class="fn">LPAD</span><span class="pun">(</span><span class="fn">SUBSTR</span><span class="pun">(</span><span class="id">m</span><span class="pun">.</span><span class="fld">email</span><span class="pun">,</span> <span class="num">1</span><span class="pun">,</span> <span class="num">3</span><span class="pun">),</span> <span class="num">9</span><span class="pun">,</span> <span class="str">'*'</span><span class="pun">)</span>      <span class="kw">AS</span> <span class="str">"Email Jefe"</span>
+<span class="kw">FROM</span>      <span class="id">hr</span><span class="pun">.</span><span class="id">employees</span> <span class="id">e</span>
+<span class="kw">LEFT JOIN</span> <span class="id">hr</span><span class="pun">.</span><span class="id">employees</span> <span class="id">m</span> <span class="kw">ON</span> <span class="id">e</span><span class="pun">.</span><span class="fld">manager_id</span> <span class="op">=</span> <span class="id">m</span><span class="pun">.</span><span class="fld">employee_id</span>
+<span class="kw">ORDER BY</span> <span class="id">e</span><span class="pun">.</span><span class="fld">last_name</span><span class="pun">;</span></pre>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="section" id="tab-plsql">
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 04</div>
+            <h3>Número primo del día</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Con la fecha del sistema, extrae el día actual y determina si es un número primo.
+          Si lo es, imprime "HOLA PRIMO"; de lo contrario, imprime "NO ES PRIMO".
+          Se usa una estructura condicional IF-ELSIF dentro de un bloque anónimo.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">DECLARE</span>
+    <span class="id">vd_current_date</span> <span class="kw">NUMBER</span> <span class="pun">:=</span> <span class="fn">TO_NUMBER</span><span class="pun">(</span><span class="fn">TO_CHAR</span><span class="pun">(</span><span class="fn">SYSDATE</span><span class="pun">,</span> <span class="str">'DD'</span><span class="pun">));</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">IF</span> <span class="id">vd_current_date</span> <span class="kw">IN</span> <span class="pun">(</span><span class="num">2</span><span class="pun">,</span> <span class="num">3</span><span class="pun">,</span> <span class="num">5</span><span class="pun">,</span> <span class="num">7</span><span class="pun">,</span> <span class="num">11</span><span class="pun">,</span> <span class="num">13</span><span class="pun">,</span> <span class="num">17</span><span class="pun">,</span> <span class="num">19</span><span class="pun">,</span> <span class="num">23</span><span class="pun">,</span> <span class="num">29</span><span class="pun">,</span> <span class="num">31</span><span class="pun">)</span> <span class="kw">THEN</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'HOLA PRIMO'</span><span class="pun">);</span>
+    <span class="kw">ELSE</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'NO ES PRIMO'</span><span class="pun">);</span>
+    <span class="kw">END IF</span><span class="pun">;</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 05</div>
+            <h3>Serie Fibonacci hasta 100 con LOOP</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          En un bloque anónimo, imprime la serie de Fibonacci para todos los valores menores o iguales a 100.
+          Se utiliza un ciclo LOOP con EXIT WHEN para controlar la condición de parada,
+          intercambiando valores entre variables auxiliares en cada iteración.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">DECLARE</span>
+    <span class="id">vn_a</span>    <span class="kw">NUMBER</span> <span class="pun">:=</span> <span class="num">0</span><span class="pun">;</span>
+    <span class="id">vn_b</span>    <span class="kw">NUMBER</span> <span class="pun">:=</span> <span class="num">1</span><span class="pun">;</span>
+    <span class="id">vn_temp</span> <span class="kw">NUMBER</span><span class="pun">;</span>
+<span class="kw">BEGIN</span>
+    <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'Serie Fibonacci hasta 100:'</span><span class="pun">);</span>
+    <span class="kw">LOOP</span>
+        <span class="kw">EXIT WHEN</span> <span class="id">vn_a</span> <span class="op">></span> <span class="num">100</span><span class="pun">;</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="id">vn_a</span><span class="pun">);</span>
+        <span class="id">vn_temp</span> <span class="pun">:=</span> <span class="id">vn_a</span> <span class="op">+</span> <span class="id">vn_b</span><span class="pun">;</span>
+        <span class="id">vn_a</span>    <span class="pun">:=</span> <span class="id">vn_b</span><span class="pun">;</span>
+        <span class="id">vn_b</span>    <span class="pun">:=</span> <span class="id">vn_temp</span><span class="pun">;</span>
+    <span class="kw">END LOOP</span><span class="pun">;</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 06</div>
+            <h3>Mínimo Común Múltiplo con WHILE</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Calcula el Mínimo Común Múltiplo (MCM) de dos números cualesquiera usando un ciclo WHILE.
+          El algoritmo parte del mayor de los dos valores e incrementa hasta encontrar el primer múltiplo común.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">DECLARE</span>
+    <span class="id">vn_num1</span>  <span class="kw">NUMBER</span> <span class="pun">:=</span> <span class="num">12</span><span class="pun">;</span>
+    <span class="id">vn_num2</span>  <span class="kw">NUMBER</span> <span class="pun">:=</span> <span class="num">18</span><span class="pun">;</span>
+    <span class="id">vn_mayor</span> <span class="kw">NUMBER</span><span class="pun">;</span>
+    <span class="id">vn_mcm</span>   <span class="kw">NUMBER</span><span class="pun">;</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">IF</span> <span class="id">vn_num1</span> <span class="op">></span> <span class="id">vn_num2</span> <span class="kw">THEN</span>
+        <span class="id">vn_mayor</span> <span class="pun">:=</span> <span class="id">vn_num1</span><span class="pun">;</span>
+    <span class="kw">ELSE</span>
+        <span class="id">vn_mayor</span> <span class="pun">:=</span> <span class="id">vn_num2</span><span class="pun">;</span>
+    <span class="kw">END IF</span><span class="pun">;</span>
+
+    <span class="id">vn_mcm</span> <span class="pun">:=</span> <span class="id">vn_mayor</span><span class="pun">;</span>
+
+    <span class="kw">WHILE</span> <span class="fn">MOD</span><span class="pun">(</span><span class="id">vn_mcm</span><span class="pun">,</span> <span class="id">vn_num1</span><span class="pun">)</span> <span class="op">!=</span> <span class="num">0</span> <span class="kw">OR</span> <span class="fn">MOD</span><span class="pun">(</span><span class="id">vn_mcm</span><span class="pun">,</span> <span class="id">vn_num2</span><span class="pun">)</span> <span class="op">!=</span> <span class="num">0</span> <span class="kw">LOOP</span>
+        <span class="id">vn_mcm</span> <span class="pun">:=</span> <span class="id">vn_mcm</span> <span class="op">+</span> <span class="id">vn_mayor</span><span class="pun">;</span>
+    <span class="kw">END LOOP</span><span class="pun">;</span>
+
+    <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'El MCM de '</span> <span class="op">||</span> <span class="id">vn_num1</span> <span class="op">||</span> <span class="str">' y '</span> <span class="op">||</span> <span class="id">vn_num2</span> <span class="op">||</span> <span class="str">' es: '</span> <span class="op">||</span> <span class="id">vn_mcm</span><span class="pun">);</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 07</div>
+            <h3>Cursor explícito — primer empleado del departamento</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Usando un cursor explícito, recupera el primer empleado del departamento 80.
+          Se declara el cursor, se abre, se hace FETCH del primer registro, se imprime y se cierra.
+          Introduce el ciclo de vida completo de un cursor en PL/SQL.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">DECLARE</span>
+    <span class="kw">CURSOR</span> <span class="id">C_MYEMPLOYEES</span> <span class="kw">IS</span>
+        <span class="kw">SELECT</span> <span class="fld">first_name</span><span class="pun">,</span> <span class="fld">department_id</span>
+        <span class="kw">FROM</span>   <span class="id">spinzonv</span><span class="pun">.</span><span class="id">employees</span>
+        <span class="kw">WHERE</span>  <span class="fld">department_id</span> <span class="op">=</span> <span class="num">80</span><span class="pun">;</span>
+
+    <span class="id">vv_firstName</span>    <span class="kw">VARCHAR2</span><span class="pun">(</span><span class="num">30</span><span class="pun">);</span>
+    <span class="id">vn_departmentID</span> <span class="kw">NUMBER</span><span class="pun">(</span><span class="num">4</span><span class="pun">,</span><span class="num">0</span><span class="pun">);</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">OPEN</span>  <span class="id">C_MYEMPLOYEES</span><span class="pun">;</span>
+    <span class="kw">FETCH</span> <span class="id">C_MYEMPLOYEES</span> <span class="kw">INTO</span> <span class="id">vv_firstName</span><span class="pun">,</span> <span class="id">vn_departmentID</span><span class="pun">;</span>
+    <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="id">vv_firstName</span> <span class="op">||</span> <span class="str">' '</span> <span class="op">||</span> <span class="id">vn_departmentID</span><span class="pun">);</span>
+    <span class="kw">CLOSE</span> <span class="id">C_MYEMPLOYEES</span><span class="pun">;</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 08</div>
+            <h3>Cursor con parámetros</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Declara un cursor parametrizado que recibe el ID de departamento como argumento en tiempo de ejecución.
+          Al abrir el cursor se pasa el parámetro dinámicamente con &amp;user, lo que permite reutilizar la misma consulta para distintos departamentos.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">DECLARE</span>
+    <span class="kw">CURSOR</span> <span class="id">C_MYEMPLOYEES2</span><span class="pun">(</span><span class="id">param_department_id</span> <span class="kw">IN NUMBER</span><span class="pun">)</span> <span class="kw">IS</span>
+        <span class="kw">SELECT</span> <span class="fld">first_name</span><span class="pun">,</span> <span class="fld">department_id</span>
+        <span class="kw">FROM</span>   <span class="id">spinzonv</span><span class="pun">.</span><span class="id">employees</span>
+        <span class="kw">WHERE</span>  <span class="fld">department_id</span> <span class="op">=</span> <span class="id">param_department_id</span><span class="pun">;</span>
+
+    <span class="id">vv_firstName</span>    <span class="kw">VARCHAR2</span><span class="pun">(</span><span class="num">30</span><span class="pun">);</span>
+    <span class="id">vn_departmentID</span> <span class="kw">NUMBER</span><span class="pun">(</span><span class="num">4</span><span class="pun">,</span><span class="num">0</span><span class="pun">);</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">OPEN</span>  <span class="id">C_MYEMPLOYEES2</span><span class="pun">(&amp;</span><span class="id">user</span><span class="pun">);</span>
+    <span class="kw">FETCH</span> <span class="id">C_MYEMPLOYEES2</span> <span class="kw">INTO</span> <span class="id">vv_firstName</span><span class="pun">,</span> <span class="id">vn_departmentID</span><span class="pun">;</span>
+    <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="id">vv_firstName</span> <span class="op">||</span> <span class="str">' '</span> <span class="op">||</span> <span class="id">vn_departmentID</span><span class="pun">);</span>
+    <span class="kw">CLOSE</span> <span class="id">C_MYEMPLOYEES2</span><span class="pun">;</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 09</div>
+            <h3>Procedimiento almacenado — Saludo</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Crea un procedimiento almacenado llamado SP_holaMundo que recibe un nombre como parámetro
+          con valor por defecto 'JAIBER'. Ilustra la estructura básica de un stored procedure con parámetros IN y DEFAULT.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="kw">CREATE OR REPLACE PROCEDURE</span> <span class="fn">SP_holaMundo</span> <span class="pun">(</span>
+    <span class="id">param_nombre</span> <span class="kw">IN VARCHAR2 DEFAULT</span> <span class="str">'JAIBER'</span>
+<span class="pun">)</span>
+<span class="kw">IS</span>
+    <span class="id">vv_mensaje</span> <span class="kw">VARCHAR2</span><span class="pun">(</span><span class="num">40</span><span class="pun">);</span>
+<span class="kw">BEGIN</span>
+    <span class="id">vv_mensaje</span> <span class="pun">:=</span> <span class="str">'Hola el nombre es: '</span> <span class="op">||</span> <span class="id">param_nombre</span><span class="pun">;</span>
+    <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="id">vv_mensaje</span><span class="pun">);</span>
+<span class="kw">END</span> <span class="id">SP_holaMundo</span><span class="pun">;</span>
+<span class="pun">/</span>
+
+<span class="kw">BEGIN</span>
+    <span class="fn">SP_holaMundo</span><span class="pun">(</span><span class="str">'Valentina'</span><span class="pun">);</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-plsql">PL/SQL</span>
+            <div class="ex-num">Ejercicio 10</div>
+            <h3>Manejo de excepciones</h3>
+          </div>
+        </div>
+        <p class="enunciado plsql-enunciado">
+          Practica el manejo de errores en PL/SQL usando excepciones de usuario (RAISE),
+          predefinidas (ZERO_DIVIDE) y el manejador genérico WHEN OTHERS con SQLCODE y SQLERRM.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">pl/sql</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre>
+<span class="kw">DECLARE</span>
+    <span class="id">exc_miprimeraexception</span> <span class="kw">EXCEPTION</span><span class="pun">;</span>
+    <span class="id">result</span>  <span class="kw">NUMBER</span><span class="pun">;</span>
+<span class="kw">BEGIN</span>
+    <span class="kw">IF</span> <span class="num">1</span> <span class="op">=</span> <span class="num">1</span> <span class="kw">THEN</span>
+        <span class="kw">RAISE</span> <span class="id">exc_miprimeraexception</span><span class="pun">;</span>
+    <span class="kw">ELSE</span>
+        <span class="kw">SELECT</span> <span class="num">1</span><span class="op">/</span><span class="num">0</span> <span class="kw">INTO</span> <span class="id">result</span> <span class="kw">FROM</span> <span class="id">dual</span><span class="pun">;</span>
+    <span class="kw">END IF</span><span class="pun">;</span>
+<span class="kw">EXCEPTION</span>
+    <span class="kw">WHEN</span> <span class="id">exc_miprimeraexception</span> <span class="kw">THEN</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'Penalti para el yuyu'</span><span class="pun">);</span>
+    <span class="kw">WHEN</span> <span class="id">ZERO_DIVIDE</span> <span class="kw">THEN</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'Junior no es el papá de nadie'</span><span class="pun">);</span>
+    <span class="kw">WHEN OTHERS THEN</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="str">'Error: '</span> <span class="op">||</span> <span class="fn">TO_CHAR</span><span class="pun">(</span><span class="fn">SQLCODE</span><span class="pun">));</span>
+        <span class="id">DBMS_OUTPUT</span><span class="pun">.</span><span class="fn">PUT_LINE</span><span class="pun">(</span><span class="fn">SQLERRM</span><span class="pun">);</span>
+<span class="kw">END</span><span class="pun">;</span>
+<span class="pun">/</span></pre>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <div class="section" id="tab-mongo">
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-mongo">MongoDB</span>
+            <div class="ex-num">Ejercicio 11</div>
+            <h3>Inserción de colecciones — Mundial 2026</h3>
+          </div>
+        </div>
+        <p class="enunciado mongo-enunciado">
+          Crea la base de datos <strong>mundial2026</strong> e inserta datos en cuatro colecciones:
+          selecciones, jugadores, estadios y partidos. Practica <code>insertMany()</code>
+          para poblar colecciones con documentos anidados.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">mongodb shell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="fn">use</span><span class="pun">(</span><span class="str">"mundial2026"</span><span class="pun">);</span>
+
+<span class="id">db</span><span class="pun">.</span><span class="fld">selecciones</span><span class="pun">.</span><span class="fn">insertMany</span><span class="pun">([</span>
+  <span class="pun">{</span> <span class="key">continente</span><span class="pun">:</span> <span class="str">"América del Sur"</span><span class="pun">,</span> <span class="key">pais</span><span class="pun">:</span> <span class="str">"Colombia"</span><span class="pun">,</span>  <span class="key">capital</span><span class="pun">:</span> <span class="str">"Bogotá"</span><span class="pun">,</span>
+    <span class="key">poblacion</span><span class="pun">:</span> <span class="num">60000000</span><span class="pun">,</span> <span class="key">colorCamiseta</span><span class="pun">:</span> <span class="str">"Amarillo"</span><span class="pun">,</span> <span class="key">mundialesGanados</span><span class="pun">:</span> <span class="num">0</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">continente</span><span class="pun">:</span> <span class="str">"América del Sur"</span><span class="pun">,</span> <span class="key">pais</span><span class="pun">:</span> <span class="str">"Argentina"</span><span class="pun">,</span> <span class="key">capital</span><span class="pun">:</span> <span class="str">"Buenos Aires"</span><span class="pun">,</span>
+    <span class="key">poblacion</span><span class="pun">:</span> <span class="num">46000000</span><span class="pun">,</span>  <span class="key">colorCamiseta</span><span class="pun">:</span> <span class="str">"Celeste"</span><span class="pun">,</span>   <span class="key">mundialesGanados</span><span class="pun">:</span> <span class="num">3</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">continente</span><span class="pun">:</span> <span class="str">"América del Sur"</span><span class="pun">,</span> <span class="key">pais</span><span class="pun">:</span> <span class="str">"Brasil"</span><span class="pun">,</span>    <span class="key">capital</span><span class="pun">:</span> <span class="str">"Brasilia"</span><span class="pun">,</span>
+    <span class="key">poblacion</span><span class="pun">:</span> <span class="num">214000000</span><span class="pun">,</span> <span class="key">colorCamiseta</span><span class="pun">:</span> <span class="str">"Amarillo"</span><span class="pun">,</span> <span class="key">mundialesGanados</span><span class="pun">:</span> <span class="num">5</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">continente</span><span class="pun">:</span> <span class="str">"Europa"</span><span class="pun">,</span>          <span class="key">pais</span><span class="pun">:</span> <span class="str">"Alemania"</span><span class="pun">,</span>  <span class="key">capital</span><span class="pun">:</span> <span class="str">"Berlín"</span><span class="pun">,</span>
+    <span class="key">poblacion</span><span class="pun">:</span> <span class="num">83000000</span><span class="pun">,</span>  <span class="key">colorCamiseta</span><span class="pun">:</span> <span class="str">"Blanco"</span><span class="pun">,</span>    <span class="key">mundialesGanados</span><span class="pun">:</span> <span class="num">4</span> <span class="pun">}</span>
+<span class="pun">]);</span>
+
+<span class="id">db</span><span class="pun">.</span><span class="fld">jugadores</span><span class="pun">.</span><span class="fn">insertMany</span><span class="pun">([</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"James"</span><span class="pun">,</span>  <span class="key">apellido</span><span class="pun">:</span> <span class="str">"Rodriguez"</span><span class="pun">,</span> <span class="key">nacionalidad</span><span class="pun">:</span> <span class="str">"Colombia"</span><span class="pun">,</span>
+    <span class="key">club</span><span class="pun">:</span> <span class="str">"Minnesota United"</span><span class="pun">,</span> <span class="key">rol</span><span class="pun">:</span> <span class="str">"Mediocentro"</span><span class="pun">,</span> <span class="key">golesSeleccion</span><span class="pun">:</span> <span class="num">31</span>  <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"Lionel"</span><span class="pun">,</span> <span class="key">apellido</span><span class="pun">:</span> <span class="str">"Messi"</span><span class="pun">,</span>     <span class="key">nacionalidad</span><span class="pun">:</span> <span class="str">"Argentina"</span><span class="pun">,</span>
+    <span class="key">club</span><span class="pun">:</span> <span class="str">"Inter Miami"</span><span class="pun">,</span>       <span class="key">rol</span><span class="pun">:</span> <span class="str">"Delantero"</span><span class="pun">,</span>   <span class="key">golesSeleccion</span><span class="pun">:</span> <span class="num">106</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"Kylian"</span><span class="pun">,</span> <span class="key">apellido</span><span class="pun">:</span> <span class="str">"Mbappé"</span><span class="pun">,</span>    <span class="key">nacionalidad</span><span class="pun">:</span> <span class="str">"Francia"</span><span class="pun">,</span>
+    <span class="key">club</span><span class="pun">:</span> <span class="str">"PSG"</span><span class="pun">,</span>                <span class="key">rol</span><span class="pun">:</span> <span class="str">"Delantero"</span><span class="pun">,</span>   <span class="key">golesSeleccion</span><span class="pun">:</span> <span class="num">46</span>  <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"Luis"</span><span class="pun">,</span>   <span class="key">apellido</span><span class="pun">:</span> <span class="str">"Díaz"</span><span class="pun">,</span>      <span class="key">nacionalidad</span><span class="pun">:</span> <span class="str">"Colombia"</span><span class="pun">,</span>
+    <span class="key">club</span><span class="pun">:</span> <span class="str">"Liverpool"</span><span class="pun">,</span>          <span class="key">rol</span><span class="pun">:</span> <span class="str">"Extremo"</span><span class="pun">,</span>     <span class="key">golesSeleccion</span><span class="pun">:</span> <span class="num">14</span>  <span class="pun">}</span>
+<span class="pun">]);</span>
+
+<span class="id">db</span><span class="pun">.</span><span class="fld">estadios</span><span class="pun">.</span><span class="fn">insertMany</span><span class="pun">([</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"MetLife Stadium"</span><span class="pun">,</span> <span class="key">pais</span><span class="pun">:</span> <span class="str">"Estados Unidos"</span><span class="pun">,</span> <span class="key">ciudad</span><span class="pun">:</span> <span class="str">"Nueva York"</span><span class="pun">,</span> <span class="key">capacidad</span><span class="pun">:</span> <span class="num">82500</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"Azteca"</span><span class="pun">,</span>          <span class="key">pais</span><span class="pun">:</span> <span class="str">"México"</span><span class="pun">,</span>          <span class="key">ciudad</span><span class="pun">:</span> <span class="str">"CDMX"</span><span class="pun">,</span>       <span class="key">capacidad</span><span class="pun">:</span> <span class="num">87000</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">nombre</span><span class="pun">:</span> <span class="str">"Maracaná"</span><span class="pun">,</span>         <span class="key">pais</span><span class="pun">:</span> <span class="str">"Brasil"</span><span class="pun">,</span>          <span class="key">ciudad</span><span class="pun">:</span> <span class="str">"Río"</span><span class="pun">,</span>        <span class="key">capacidad</span><span class="pun">:</span> <span class="num">78000</span> <span class="pun">}</span>
+<span class="pun">]);</span>
+
+<span class="id">db</span><span class="pun">.</span><span class="fld">partidos</span><span class="pun">.</span><span class="fn">insertMany</span><span class="pun">([</span>
+  <span class="pun">{</span> <span class="key">local</span><span class="pun">:</span> <span class="str">"Colombia"</span><span class="pun">,</span>  <span class="key">visitante</span><span class="pun">:</span> <span class="str">"Inglaterra"</span><span class="pun">,</span> <span class="key">estadio</span><span class="pun">:</span> <span class="str">"MetLife Stadium"</span><span class="pun">,</span> <span class="key">fecha</span><span class="pun">:</span> <span class="str">"2026-06-15"</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">local</span><span class="pun">:</span> <span class="str">"Argentina"</span><span class="pun">,</span> <span class="key">visitante</span><span class="pun">:</span> <span class="str">"Brasil"</span><span class="pun">,</span>      <span class="key">estadio</span><span class="pun">:</span> <span class="str">"Maracaná"</span><span class="pun">,</span>        <span class="key">fecha</span><span class="pun">:</span> <span class="str">"2026-06-16"</span> <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">local</span><span class="pun">:</span> <span class="str">"Francia"</span><span class="pun">,</span>   <span class="key">visitante</span><span class="pun">:</span> <span class="str">"España"</span><span class="pun">,</span>      <span class="key">estadio</span><span class="pun">:</span> <span class="str">"Stade de France"</span><span class="pun">,</span> <span class="key">fecha</span><span class="pun">:</span> <span class="str">"2026-06-17"</span> <span class="pun">}</span>
+<span class="pun">]);</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-mongo">MongoDB</span>
+            <div class="ex-num">Ejercicio 12</div>
+            <h3>Airbnb — Listados con antigüedad ≥ 5 años en Sydney</h3>
+          </div>
+        </div>
+        <p class="enunciado mongo-enunciado">
+          Consulta la base de datos de Airbnb para encontrar alojamientos en Sydney
+          cuya primera reseña sea anterior a hace 5 años. Se usa el operador <code>$lte</code>
+          con una fecha calculada dinámicamente. La segunda versión proyecta solo los campos relevantes.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">mongodb shell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="fn">use</span><span class="pun">(</span><span class="str">"sample_airbnb"</span><span class="pun">);</span>
+
+<span class="pun">.</span><span class="fld">listingsAndReviews</span><span class="pun">.</span><span class="fn">find</span><span class="pun">({</span>
+  <span class="key">"address.market"</span><span class="pun">:</span> <span class="str">"Sydney"</span><span class="pun">,</span>
+  <span class="key">first_review</span><span class="pun">: {</span>
+    <span class="key">$lte</span><span class="pun">:</span> <span class="kw">new</span> <span class="fn">Date</span><span class="pun">(</span><span class="kw">new</span> <span class="fn">Date</span><span class="pun">().</span><span class="fn">setFullYear</span><span class="pun">(</span><span class="kw">new</span> <span class="fn">Date</span><span class="pun">().</span><span class="fn">getFullYear</span><span class="pun">()</span> <span class="op">-</span> <span class="num">5</span><span class="pun">))</span>
+  <span class="pun">}</span>
+<span class="pun">});</span>
+
+<span class="pun">.</span><span class="fld">listingsAndReviews</span><span class="pun">.</span><span class="fn">find</span><span class="pun">(</span>
+  <span class="pun">{</span>
+    <span class="key">"address.market"</span><span class="pun">:</span> <span class="str">"Sydney"</span><span class="pun">,</span>
+    <span class="key">first_review</span><span class="pun">:</span> <span class="pun">{</span> <span class="key">$lte</span><span class="pun">:</span> <span class="kw">new</span> <span class="fn">Date</span><span class="pun">(</span><span class="str">"2021-05-05"</span><span class="pun">)</span> <span class="pun">}</span>
+  <span class="pun">},</span>
+  <span class="pun">{</span> <span class="key">_id</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">name</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">first_review</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">"address.market"</span><span class="pun">:</span> <span class="num">1</span> <span class="pun">}</span>
+<span class="pun">);</span></pre>
+        </div>
+      </div>
+
+      <div class="ex-card">
+        <div class="card-header">
+          <div class="card-meta">
+            <span class="badge badge-mongo">MongoDB</span>
+            <div class="ex-num">Ejercicio 13</div>
+            <h3>Airbnb — Apartamentos con Cable TV y Wifi</h3>
+          </div>
+        </div>
+        <p class="enunciado mongo-enunciado">
+          Filtra apartamentos en Airbnb que cuenten con todos los servicios indicados: Cable TV y Wifi.
+          Se usa el operador <code>$all</code> sobre el campo array <code>amenities</code>.
+          La segunda variante añade país y número de camas a la proyección.
+        </p>
+        <div class="code-wrapper">
+          <div class="code-header">
+            <span class="code-lang">mongodb shell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+          </div>
+          <pre><span class="fn">use</span><span class="pun">(</span><span class="str">"sample_airbnb"</span><span class="pun">);</span>
+
+<span class="pun">.</span><span class="fld">listingsAndReviews</span><span class="pun">.</span><span class="fn">find</span><span class="pun">({</span>
+  <span class="key">property_type</span><span class="pun">:</span> <span class="str">"Apartment"</span><span class="pun">,</span>
+  <span class="key">amenities</span><span class="pun">:</span> <span class="pun">{</span> <span class="key">$all</span><span class="pun">:</span> <span class="pun">[</span><span class="str">"Cable TV"</span><span class="pun">,</span> <span class="str">"Wifi"</span><span class="pun">]</span> <span class="pun">}</span>
+<span class="pun">});</span>
+
+<span class="pun">.</span><span class="fld">listingsAndReviews</span><span class="pun">.</span><span class="fn">find</span><span class="pun">(</span>
+  <span class="pun">{</span>
+    <span class="key">property_type</span><span class="pun">:</span> <span class="str">"Apartment"</span><span class="pun">,</span>
+    <span class="key">amenities</span><span class="pun">:</span> <span class="pun">{</span> <span class="key">$all</span><span class="pun">:</span> <span class="pun">[</span><span class="str">"Cable TV"</span><span class="pun">,</span> <span class="str">"Wifi"</span><span class="pun">]</span> <span class="pun">}</span>
+  <span class="pun">},</span>
+  <span class="pun">{</span>
+    <span class="key">_id</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">name</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">property_type</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span>
+    <span class="key">amenities</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">"address.country"</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span>
+    <span class="key">accommodates</span><span class="pun">:</span> <span class="num">1</span><span class="pun">,</span> <span class="key">beds</span><span class="pun">:</span> <span class="num">1</span>
+  <span class="pun">}</span>
+<span class="pun">);</span></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-area">
+    <a class="back-link" href="/e-portafolio/evidencia">← Volver a Evidencias</a>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.querySelectorAll('#tab-' + tab + ' .ex-card').forEach((c, i) => {
+          c.style.animationDelay = (i * 0.05) + 's';
+          c.style.animation = 'none';
+          void c.offsetWidth;
+          c.style.animation = '';
+        });
+      });
+    });
+
+    function copyCode(btn) {
+      const pre = btn.closest('.code-wrapper').querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => btn.textContent = 'Copiar', 1800);
+      });
+    }
+  </script>
+
+</body>
+</html>

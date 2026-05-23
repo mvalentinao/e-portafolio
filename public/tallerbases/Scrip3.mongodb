@@ -1,0 +1,16 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.insertMany([ 
+  { 
+    name: "Studio de Arte Urbano", 
+    property_type: "Apartment", 
+    price: NumberDecimal("80.00"), 
+    summary: "Estudio creativo en el corazón del barrio artístico." 
+  }, 
+  { 
+    name: "Loft Minimalista", 
+    property_type: "Loft", 
+    price: NumberDecimal("110.00"), 
+    summary: "Loft de diseño minimalista con acabados de alta calidad." 
+  } 
+]) 

@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.find( 
+  { amenities: { $size: 20 } }, 
+  { _id: 0, name: 1, amenities: 1 } 
+)

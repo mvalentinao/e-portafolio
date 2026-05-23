@@ -1,0 +1,9 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.updateOne( 
+  { name: "Departamento Vista Cordillera" }, 
+  { 
+    $set: { last_modified: new Date() }, 
+    $push: { amenities: "Smart TV" } 
+  } 
+) 

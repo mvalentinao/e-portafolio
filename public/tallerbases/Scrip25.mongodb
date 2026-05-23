@@ -1,0 +1,13 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.aggregate([ 
+  { 
+    $project: { 
+      _id: 0, 
+      name: 1, 
+      price: 1, 
+      price_entero: { $toInt: "$price" } 
+    } 
+  }, 
+  { $limit: 20 } 
+]) 

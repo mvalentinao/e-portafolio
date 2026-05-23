@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.find( 
+  { "address.country": "Brazil" }, 
+  { _id: 0, name: 1, price: 1 } 
+) 

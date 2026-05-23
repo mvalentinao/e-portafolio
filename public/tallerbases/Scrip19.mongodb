@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.updateMany( 
+  { amenities: "Cable TV" }, 
+  { $pull: { amenities: "Cable TV" } } 
+)

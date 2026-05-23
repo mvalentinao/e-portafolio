@@ -1,0 +1,6 @@
+use("sample_airbnb")
+
+db.listingsAndReviews.find(
+  { name: { $regex: "luxury", $options: "i" } },
+  { _id: 0, name: 1 }
+)

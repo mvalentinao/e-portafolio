@@ -1,0 +1,11 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.aggregate([ 
+  { 
+    $group: { 
+      _id: "$address.country", 
+      precio_promedio: { $avg: { $toDouble: "$price" } }
+    } 
+  }, 
+  { $sort: { precio_promedio: -1 } } 
+])

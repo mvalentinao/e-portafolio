@@ -1,0 +1,15 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.insertOne({ 
+  name: "Departamento Vista Cordillera", 
+  summary: "Hermoso departamento con vista a la Cordillera de los Andes.", 
+  property_type: "Apartment", 
+  price: NumberDecimal("120.00"), 
+  address: { 
+    country: "Chile", 
+    country_code: "CL", 
+    market: "Santiago", 
+    street: "Av. Providencia 1234", 
+    suburb: "Providencia" 
+  } 
+}) 

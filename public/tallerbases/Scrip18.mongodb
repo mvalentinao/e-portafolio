@@ -1,0 +1,6 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.updateMany( 
+  { "address.country": "Spain" }, 
+  { $inc: { number_of_reviews: 1 } } 
+)

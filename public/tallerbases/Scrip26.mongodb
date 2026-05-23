@@ -1,0 +1,24 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.aggregate([ 
+  { 
+    $match: { 
+      number_of_reviews: { $gte: 10 }, 
+      "review_scores.review_scores_rating": { $exists: true, $ne: null } 
+    } 
+  }, 
+  { 
+    $group: { 
+      _id: null, 
+      promedio_rating: { $avg: "$review_scores.review_scores_rating" }, 
+      total_listings_analizados: { $sum: 1 } 
+    } 
+  }, 
+  { 
+    $project: { 
+      _id: 0, 
+      promedio_rating: { $round: ["$promedio_rating", 2] }, 
+      total_listings_analizados: 1 
+    } 
+  } 
+])

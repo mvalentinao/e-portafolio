@@ -1,0 +1,11 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.findOne({}, { _id: 1 }) 
+
+use ("sample_airbnb")
+
+db.listingsAndReviews.insertOne({
+  _id: "10006546",
+  name: "Listing Duplicado",
+  price: NumberDecimal("50.00")
+})

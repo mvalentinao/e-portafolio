@@ -1,0 +1,8 @@
+use ("sample_airbnb") 
+
+db.listingsAndReviews.insertOne({ 
+  name: "Cozy Cabin Retreat", 
+  summary: "Acogedor cabin en el bosque, ideal para escapadas de fin de semana.", 
+  property_type: "Cabin", 
+  price: NumberDecimal("150.00") 
+}) 
